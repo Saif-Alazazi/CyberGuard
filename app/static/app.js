@@ -142,7 +142,8 @@ function renderResult(r) {
     el("ul", {}, (lang === "ar" ? r.llm.evidence_ar : r.llm.evidence_en || []).map((e) => el("li", { text: e })))) : null;
 
   const ev = el("div", { class: "evidence" }, el("b", { text: t("evidence") + ": " }),
-    ["pdf", "json", "stix"].map((f) => el("a", { class: "btn", href: `/api/evidence/${r.id}?format=${f}`, text: t(f) })),
+    ["pdf", "json", "stix"].map((f) => el("a", { class: "btn", href: `/api/evidence/${r.id}?format=${f}`, text: t(f),
+      target: f === "pdf" ? "_blank" : null, rel: f === "pdf" ? "noopener" : null })),
     el("span", { class: "muted small mono", text: `  ${t("case")} ${r.id} · ${r.elapsed_ms} ms · ${r.mode}` }));
 
   return el("article", { class: "card result " + TIER_CLASS[r.tier] }, head,

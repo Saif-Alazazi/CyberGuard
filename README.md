@@ -80,7 +80,19 @@ flowchart LR
 | tranco | legit | 140 | Real deep links from 140 random Tranco top-10k sites |
 | legit_hosting | legit | 25 | Well-known organisations' pages on github.io / blogspot |
 
-RESULTS_PLACEHOLDER
+| Run | N | Precision | Recall | F1 | FPR | TP | FP | FN | TN |
+|---|---|---|---|---|---|---|---|---|---|
+| Tuning sample + all legit, feeds OFF | 1559 | 1.000 | 0.754 | 0.860 | 0.000% | 805 | 0 | 263 | 491 |
+| Held-out OpenPhish only, feeds OFF | 1317 | 1.000 | 0.737 | 0.848 | 0.000% | 970 | 0 | 347 | 0 |
+| Tuning sample + all legit, feeds ON | 1559 | 1.000 | 0.842 | 0.914 | 0.000% | 899 | 0 | 169 | 491 |
+| Held-out OpenPhish only, feeds ON | 1317 | 1.000 | 0.808 | 0.894 | 0.000% | 1064 | 0 | 253 | 0 |
+| UAE legit links only (official + business) | 326 | - | - | - | 0.000% | 0 | 0 | 0 | 326 |
+| Smishing Triad IOCs only, feeds OFF | 68 | 1.000 | 0.794 | 0.885 | 0.000% | 54 | 0 | 14 | 0 |
+| UAE synthetic patterns (not in headline), feeds OFF | 30 | 1.000 | 1.000 | 1.000 | 0.000% | 30 | 0 | 0 | 0 |
+
+Fast-mode latency per URL: median 828 ms, p95 2890 ms (feeds off, run from Abu Dhabi, concurrency 40).
+
+Held-out rows contain only fraud URLs, so their precision is trivially 1.0; their recall is the estimate for unseen phishing.
 
 **How to read this honestly**
 

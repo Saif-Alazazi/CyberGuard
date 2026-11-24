@@ -133,7 +133,7 @@ def api_evidence(case_id: str, format: str = Query("json", pattern="^(json|pdf|s
     shot = store.get_screenshot(case_id)
     if format == "pdf":
         return Response(evidence.build_pdf(r, shot), media_type="application/pdf",
-                        headers={"Content-Disposition": f"attachment; filename={case_id}.pdf"})
+                        headers={"Content-Disposition": f"inline; filename={case_id}.pdf"})
     if format == "stix":
         return Response(evidence.build_stix(r), media_type="application/stix+json",
                         headers={"Content-Disposition": f"attachment; filename={case_id}.stix.json"})
