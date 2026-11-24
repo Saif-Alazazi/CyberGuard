@@ -33,7 +33,7 @@ CyberGuard is an ordered funnel. Cheap, deterministic layers decide most links. 
 | 2 | Allowlist gate | Takes the eTLD+1 (Public Suffix List) of the **final** URL and compares it with 47 verified UAE entities, including legacy domains (e.g. `darb.itc.gov.ae` → `qmobility.ae`, `etisalat.ae` → `eand.ae`), plus the Tranco top-10k. Shorteners and free hosting platforms are never allowlisted. Unlisted `.gov.ae` domains are flagged for verification. Phone numbers injected into official-site queries are detected. |
 | 3 | Threat feeds | Per link: Google Safe Browsing (optional key), OpenPhish, URLhaus, ThreatFox and the Cloudflare 1.1.1.2 malware/phishing DNS filter. Bulk domain lists refreshed every 6 h: Phishing.Database, Phishing Army, phishunt.io and PhishDestroy DestroyList (~680k domains). A listed domain never overrides the official / popular / shared-hosting protections. |
 | 4 | Look-alikes | UAE and global brand tokens, typosquats, leetspeak, Unicode TR39 confusables including Arabic-Indic digits, punycode / mixed scripts, Arabic brand names in IDNs, the `brand.gov.ae-xxx.top` / `com-` suffix trick, the `brand@real-host` userinfo trick, abused TLDs, brands and machine-generated names on free hosting, and e-mail-in-fragment. |
-| 5 | Domain intel | RDAP age, registrar and abuse contact; port-43 WHOIS for `.ae`; IPinfo ASN / country; Cloudflare-proxy detection (so takedowns go to the right party); phishing-kit hosting ASNs. |
+| 5 | Domain intel | RDAP age, registrar and abuse contact; port-43 WHOIS for `.ae`; IPinfo ASN / country; Cloudflare-proxy detection (so takedowns go to the right party); phishing-kit hosting ASNs; the TLS certificate the site presents (issuer, issue date, other domains on it, SHA-256), which also links scam sites in the graph. |
 | 6 | Page capture (deep) | Cloudflare URL Scanner mobile screenshot + DOM, plus a direct mobile-UA fetch. Detects password / OTP / card / Emirates ID fields, Telegram-bot exfiltration, favicon hash, phone numbers vs the official helpline registry, brand names in page text, cloaking (CAPTCHA wall or empty page on a young brand domain), and the Cloudflare verdict. |
 | 7 | AI brand check (deep, borderline only) | Gemini (`gemini-4-hydrogen`, falling back to `gemini-3.5-flash` when the primary model is overloaded) names the brand a page claims and what it asks for. The prompt is hardened against injection: random-delimited untrusted blocks, URL as parsed parts, a fixed brand enum and JSON-schema output. **Code then applies the PhishLLM rule:** claimed brand ≠ final domain **and** credentials / payment / OTP requested. |
 | 8 | Score | Weighted reason codes give a 0-100 score. Overrides: an official domain is capped at 10; a known-bad hit scores at least 90. Tiers follow Scameter's colours. Every reason has English and Arabic text. |
@@ -87,17 +87,17 @@ flowchart LR
 
 | Run | N | Precision | Recall | F1 | FPR | TP | FP | FN | TN |
 |---|---|---|---|---|---|---|---|---|---|
-| Tuning sample + all legit, feeds OFF | 1559 | 1.000 | 0.765 | 0.867 | 0.000% | 817 | 0 | 251 | 491 |
-| Held-out OpenPhish only, feeds OFF | 1317 | 1.000 | 0.747 | 0.855 | 0.000% | 984 | 0 | 333 | 0 |
-| Tuning sample + all legit, feeds ON | 1559 | 1.000 | 0.908 | 0.952 | 0.000% | 970 | 0 | 98 | 491 |
+| Tuning sample + all legit, feeds OFF (engine only) | 1559 | 1.000 | 0.772 | 0.871 | 0.000% | 824 | 0 | 244 | 491 |
+| Held-out OpenPhish only, feeds OFF (engine only) | 1317 | 1.000 | 0.747 | 0.855 | 0.000% | 984 | 0 | 333 | 0 |
+| Tuning sample + all legit, feeds ON | 1559 | 1.000 | 0.913 | 0.954 | 0.000% | 975 | 0 | 93 | 491 |
 | Held-out OpenPhish only, feeds ON | 1317 | 1.000 | 0.913 | 0.954 | 0.000% | 1202 | 0 | 115 | 0 |
-| Tuning sample + all legit, feeds ON + Google Safe Browsing | 1559 | 1.000 | 0.924 | 0.961 | 0.000% | 987 | 0 | 81 | 491 |
+| Tuning sample + all legit, feeds ON + Google Safe Browsing | 1559 | 1.000 | 0.923 | 0.960 | 0.000% | 986 | 0 | 82 | 491 |
 | Held-out OpenPhish only, feeds ON + Google Safe Browsing | 1317 | 1.000 | 0.919 | 0.958 | 0.000% | 1210 | 0 | 107 | 0 |
 | UAE legit links only (official + business) | 326 | - | - | - | 0.000% | 0 | 0 | 0 | 326 |
 | Smishing Triad IOCs only, feeds OFF | 68 | 1.000 | 0.794 | 0.885 | 0.000% | 54 | 0 | 14 | 0 |
 | UAE synthetic patterns (not in headline), feeds OFF | 30 | 1.000 | 1.000 | 1.000 | 0.000% | 30 | 0 | 0 | 0 |
 
-Fast-mode latency per URL: median 765 ms, p95 2405 ms (feeds off, run from Abu Dhabi, concurrency 40).
+Fast-mode latency per URL: median 735 ms, p95 3030 ms (feeds off, run from Abu Dhabi, concurrency 40).
 
 Held-out rows contain only fraud URLs, so their precision is trivially 1.0; their recall is the estimate for unseen phishing.
 
