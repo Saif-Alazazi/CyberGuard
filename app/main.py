@@ -9,11 +9,11 @@ from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Header, HTTPException, Query, Request, UploadFile
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from app import config, evidence, graph, store
+from app import config, evidence, graph, safelinks, store
 from app.pipeline.run import scan_input, scan_url
 
 STATIC = config.ROOT / "app" / "static"
@@ -43,7 +43,7 @@ LIMIT_PER_MIN = 40
 
 @app.middleware("http")
 async def guard(request: Request, call_next):
-    if request.url.path.startswith("/api/scan") or request.url.path.startswith("/api/batch"):
+    if request.url.path.startswith(("/api/scan", "/api/batch", "/api/protect", "/go")):
         ident = request.headers.get("x-forwarded-for", request.client.host if request.client else "?").split(",")[0]
         now = time.monotonic()
         with _rate_lock:
@@ -129,6 +129,31 @@ async def api_batch(file: UploadFile = File(...), mode: str = Query("fast", patt
                     " | ".join(x["ar"] for x in r["top_reasons"]), r["id"]])
     return Response(buf.getvalue().encode("utf-8-sig"), media_type="text/csv",
                     headers={"Content-Disposition": "attachment; filename=cyberguard_results.csv"})
+
+
+class ProtectRequest(BaseModel):
+    text: str = Field(min_length=3, max_length=5000, description="Message whose links should be rewritten as Safe Links")
+
+
+@app.post("/api/protect")
+def api_protect(req: ProtectRequest, request: Request):
+    """Gateway side: rewrite every link in a message into a signed click-time-checked Safe Link."""
+    out = safelinks.protect(req.text, str(request.base_url))
+    if not out["links"]:
+        raise HTTPException(status_code=422, detail="No URL found in the input.")
+    return out
+
+
+@app.get("/go")
+async def go(request: Request, u: str = Query(min_length=4, max_length=4096), s: str = ""):
+    """Click time: scan the link now. Signed + not flagged -> redirect; otherwise a bilingual warning page."""
+    signed = safelinks.valid(u, s)
+    r = await scan_url(u, "fast", source="safelink")
+    if r.get("label") == "invalid":
+        raise HTTPException(status_code=400, detail=r.get("error", "invalid link"))
+    if signed and r["label"] != "fraud":
+        return RedirectResponse(u, status_code=302)
+    return HTMLResponse(safelinks.warning_page(r, signed, str(request.base_url)), headers={"Cache-Control": "no-store"})
 
 
 @app.get("/api/evidence/{case_id}")

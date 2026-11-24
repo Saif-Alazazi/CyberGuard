@@ -10,7 +10,7 @@ CyberGuard checks a link, or a whole SMS / WhatsApp / email message, and answers
 2. **Why?** The top reasons, written in English and Arabic.
 3. **What do we do?** A one-click police evidence pack (PDF + JSON + STIX 2.1) with the screenshot, WHOIS / hosting data, hashes, UTC + GST timestamps and the takedown contacts.
 
-It also watches for threats **before** victims report them. It scans newly registered domains, fresh TLS certificates, and search results, ads and Google Maps listings for UAE brand look-alikes and fake helplines. A scam-network graph links domains that share infrastructure.
+It also watches for threats **before** victims report them. It scans newly registered domains, fresh TLS certificates, and search results, ads and Google Maps listings for UAE brand look-alikes and fake helplines. A scam-network graph links domains that share infrastructure. And with **Safe Links**, protection happens automatically at the moment someone taps a link (see below).
 
 ## Team CyberGuard
 
@@ -35,13 +35,15 @@ CyberGuard is an ordered funnel. Cheap, deterministic layers decide most links. 
 | 4 | Look-alikes | UAE and global brand tokens, typosquats, leetspeak, Unicode TR39 confusables including Arabic-Indic digits, punycode / mixed scripts, Arabic brand names in IDNs, the `brand.gov.ae-xxx.top` / `com-` suffix trick, the `brand@real-host` userinfo trick, abused TLDs, brands and machine-generated names on free hosting, and e-mail-in-fragment. |
 | 5 | Domain intel | RDAP age, registrar and abuse contact; port-43 WHOIS for `.ae`; IPinfo ASN / country; Cloudflare-proxy detection (so takedowns go to the right party); phishing-kit hosting ASNs. |
 | 6 | Page capture (deep) | Cloudflare URL Scanner mobile screenshot + DOM, plus a direct mobile-UA fetch. Detects password / OTP / card / Emirates ID fields, Telegram-bot exfiltration, favicon hash, phone numbers vs the official helpline registry, brand names in page text, cloaking (CAPTCHA wall or empty page on a young brand domain), and the Cloudflare verdict. |
-| 7 | AI brand check (deep, borderline only) | Gemini (`gemini-4-hydrogen`) names the brand a page claims and what it asks for. The prompt is hardened against injection: random-delimited untrusted blocks, URL as parsed parts, a fixed brand enum and JSON-schema output. **Code then applies the PhishLLM rule:** claimed brand ≠ final domain **and** credentials / payment / OTP requested. |
+| 7 | AI brand check (deep, borderline only) | Gemini (`gemini-4-hydrogen`, falling back to `gemini-3.5-flash` when the primary model is overloaded) names the brand a page claims and what it asks for. The prompt is hardened against injection: random-delimited untrusted blocks, URL as parsed parts, a fixed brand enum and JSON-schema output. **Code then applies the PhishLLM rule:** claimed brand ≠ final domain **and** credentials / payment / OTP requested. |
 | 8 | Score | Weighted reason codes give a 0-100 score. Overrides: an official domain is capped at 10; a known-bad hit scores at least 90. Tiers follow Scameter's colours. Every reason has English and Arabic text. |
 | 9 | Evidence pack | PDF (English + Arabic), JSON and STIX 2.1. Includes original and final URL, redirect chain, screenshot, WHOIS / registrar abuse contact, IP / ASN, UTC + GST timestamps, SHA-256 hashes, the impersonated brand and its official domain, and suggested actions (Aman 800 2626, registrar / Cloudflare abuse, CERT sharing). |
 | 10 | Scam network | A networkx graph links domains through shared IP, nameserver, favicon, phone number, form target or redirect. Common infrastructure (Cloudflare anycast, big DNS hosts) is excluded. A new link to a known scam node adds `INFRA_LINK`. |
-| W | Watchers | WhoisDS newly registered domains + crt.sh certificates filtered for UAE look-alikes, and a bilingual SerpApi pack for Google search, ads and Maps (fake helplines). Every hit is auto-scanned and shown in **Early warnings** with first-seen time and blocklist status. |
+| W | Watchers | WhoisDS newly registered domains + crt.sh certificates filtered for UAE look-alikes, and a bilingual SerpApi pack for Google search, ads and Maps (fake helplines). Every hit is auto-scanned and shown in **Early warnings** with first-seen time and blocklist status. The server runs the new-domain + certificate sweep automatically 90 s after start-up and then every 24 h; the SerpApi probe runs on demand (`POST /api/watchers/run?serp=true`) to respect its quota. |
 
-**Fast mode** (layers 0-5 + score) is about 1 s median per URL and is the default for batch and CLI. **Deep mode** adds layers 6-7 (up to ~45 s, mostly waiting for the Cloudflare scan).
+| S | Safe Links | Click-time protection. A sender (telecom SMS gateway, bank notification system, messaging bot) rewrites every link through `/go?u=…&s=…`, signed with an HMAC server secret (`POST /api/protect`). When someone taps it, CyberGuard scans the link at that moment: a signed link that is not flagged redirects instantly; a flagged link shows a bilingual warning page with the score, reasons, the real official site, a pre-filled report to Aman and the evidence PDF. Unsigned links are never auto-redirected, so the gateway cannot be abused as an open redirect. |
+
+**Fast mode** (layers 0-5 + score) is about 1 s median per URL and is the default for batch and CLI. When a fast scan lands in the grey zone (score 10-24) and the site is online, CyberGuard takes a quick look at the page without a screenshot; only strong evidence counts there (a password / OTP / card / Emirates ID form, a brand claim together with such a form, or Telegram exfiltration). **Deep mode** adds layers 6-7 (up to ~45 s, mostly waiting for the Cloudflare scan).
 
 ### Architecture
 
@@ -68,7 +70,7 @@ flowchart LR
 
 ## Evaluation (measured)
 
-`python eval/run_eval.py` runs **fast mode** on `eval/validation.csv`. All numbers below were measured by the team on 24-25 Nov 2026 with the threshold **25** (score ≥ 25 → `fraud`, which equals the "Suspicious" tier and above).
+`python eval/run_eval.py` runs **fast mode** on `eval/validation.csv`. All numbers below were measured by the team on 25 Nov 2026 (final code, fast mode including the grey-zone page check) with the threshold **25** (score ≥ 25 → `fraud`, which equals the "Suspicious" tier and above).
 
 **Validation set**
 
@@ -84,15 +86,15 @@ flowchart LR
 
 | Run | N | Precision | Recall | F1 | FPR | TP | FP | FN | TN |
 |---|---|---|---|---|---|---|---|---|---|
-| Tuning sample + all legit, feeds OFF | 1559 | 1.000 | 0.754 | 0.860 | 0.000% | 805 | 0 | 263 | 491 |
-| Held-out OpenPhish only, feeds OFF | 1317 | 1.000 | 0.737 | 0.848 | 0.000% | 970 | 0 | 347 | 0 |
-| Tuning sample + all legit, feeds ON | 1559 | 1.000 | 0.842 | 0.914 | 0.000% | 899 | 0 | 169 | 491 |
-| Held-out OpenPhish only, feeds ON | 1317 | 1.000 | 0.808 | 0.894 | 0.000% | 1064 | 0 | 253 | 0 |
+| Tuning sample + all legit, feeds OFF | 1559 | 1.000 | 0.769 | 0.869 | 0.000% | 821 | 0 | 247 | 491 |
+| Held-out OpenPhish only, feeds OFF | 1317 | 1.000 | 0.750 | 0.857 | 0.000% | 988 | 0 | 329 | 0 |
+| Tuning sample + all legit, feeds ON | 1559 | 1.000 | 0.857 | 0.923 | 0.000% | 915 | 0 | 153 | 491 |
+| Held-out OpenPhish only, feeds ON | 1317 | 1.000 | 0.821 | 0.902 | 0.000% | 1081 | 0 | 236 | 0 |
 | UAE legit links only (official + business) | 326 | - | - | - | 0.000% | 0 | 0 | 0 | 326 |
 | Smishing Triad IOCs only, feeds OFF | 68 | 1.000 | 0.794 | 0.885 | 0.000% | 54 | 0 | 14 | 0 |
 | UAE synthetic patterns (not in headline), feeds OFF | 30 | 1.000 | 1.000 | 1.000 | 0.000% | 30 | 0 | 0 | 0 |
 
-Fast-mode latency per URL: median 828 ms, p95 2890 ms (feeds off, run from Abu Dhabi, concurrency 40).
+Fast-mode latency per URL: median 796 ms, p95 2780 ms (feeds off, run from Abu Dhabi, concurrency 40).
 
 Held-out rows contain only fraud URLs, so their precision is trivially 1.0; their recall is the estimate for unseen phishing.
 
@@ -128,7 +130,7 @@ python -m watchers.run_all --serp --export         # early-warning sweep
 
 1. Push this repo to GitHub (branch `master`).
 2. In Render, choose **New → Blueprint** and select the repo. Render reads `render.yaml` (Python, free plan, `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, health check `/health`).
-3. Enter the secret environment variables when prompted: `GEMINI_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `URLHAUS_AUTH_KEY`, `IPINFO_TOKEN`, `SERPAPI_KEY`. `CYBERGUARD_API_KEY` is optional: if set, it gates batch and watcher runs.
+3. Render generates `CYBERGUARD_LINK_SECRET` (signs Safe Links) automatically. Enter the secret environment variables when prompted: `GEMINI_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `URLHAUS_AUTH_KEY`, `IPINFO_TOKEN`, `SERPAPI_KEY`. `CYBERGUARD_API_KEY` is optional: if set, it gates batch and watcher runs.
 4. Deploy, then open `https://<service>.onrender.com/health`.
 
 The free instance sleeps after 15 minutes idle, so the first request after sleeping takes ~1 minute; an external ping of `/health` every 10 minutes (e.g. cron-job.org) keeps it awake. The SQLite database is in `/tmp` and resets on restart; the last watcher findings are re-seeded from `data/seed_scans.jsonl` and `data/early_warnings_seed.json`. No headless browser runs on the server: screenshots come from the Cloudflare URL Scanner API.
@@ -140,6 +142,8 @@ The free instance sleeps after 15 minutes idle, so the first request after sleep
 | POST | `/api/scan` | `{"input": "<url or message>", "mode": "fast\|deep", "sender": "+63…"}` → one result per link |
 | POST | `/api/batch` | multipart CSV with a `url` column (≤500 rows) → CSV with label, score, tier, EN/AR reasons, case ID |
 | GET | `/api/evidence/{case_id}?format=pdf\|json\|stix` | evidence pack |
+| POST | `/api/protect` | `{"text": "<message>"}` → the message with every link rewritten as a signed Safe Link |
+| GET | `/go?u=<url>&s=<sig>` | click-time check: redirect if signed and not flagged, otherwise the bilingual warning page |
 | GET | `/api/graph` | scam-network nodes, edges and campaigns |
 | GET | `/api/early-warnings` | watcher hits |
 | GET | `/health` | liveness + which optional layers are configured |
@@ -158,16 +162,18 @@ The free instance sleeps after 15 minutes idle, so the first request after sleep
 - **`.ae` domain age:** aeDA WHOIS does not publish a creation date, so `.ae` age shows as unknown.
 - **The LLM** can misjudge benign pages and is exposed to prompt injection, so it only names the brand; code decides, and only for borderline scores.
 - **Allowlist and helpline registry** need ongoing input from the entities themselves. Several helplines are marked `unverified` and are not treated as known-good.
+- **Certificate Transparency** depends on the public crt.sh service, which was frequently unavailable (HTTP 502) during the build; the watcher retries and otherwise skips it.
 - **Search / ads / Maps coverage** is limited by the free SerpApi quota (250 searches a month). Maps branch phone numbers that are not in the registry are flagged for analyst review, not as confirmed fakes.
 - **Free-hosting heuristics** ("machine-generated site name") were measured on only 25 legitimate hosted pages; legitimate preview deployments with random names could be flagged as Suspicious.
 - **Ephemeral storage on Render free:** scan history resets on restart.
-- **Takedowns:** CyberGuard builds the takedown pack; it does not execute takedowns (police authority is required).
+- **Takedowns:** CyberGuard builds the takedown pack; it does not execute takedowns (police authority is required). The Safe Links "Report to Aman" button prepares an e-mail; it does not file a report by itself.
+- **Safe Links** protects only links that a gateway has rewritten; links sent through channels that do not rewrite (e.g. end-to-end encrypted chats) need the citizen to check them manually.
 - **Measured numbers** come from our own validation set, not UAE ground truth.
 
 ## Roadmap to an Abu Dhabi Police pilot
 
 1. **Analyst triage (month 1-2):** Aman intake pastes reported messages into CyberGuard. The AI pre-scores; only a police analyst can apply the public "confirmed scam" label (the Scameter / ScamShield model). Measure precision, recall and time-to-takedown on real reports.
-2. **Citizen check (month 3):** a public "check before you click" page plus a WhatsApp / Telegram bot that returns the bilingual verdict card.
+2. **Automatic protection (month 3):** a telecom or bank SMS gateway rewrites links from unknown senders as CyberGuard Safe Links (already built: `/api/protect` + `/go`), so every tap is checked at click time; plus a WhatsApp / Telegram bot that returns the bilingual verdict card.
 3. **Always-on early warning (month 4+):** continuous CT and new-domain monitoring for UAE brands from a UAE-hosted node (also solves geo-cloaking). Brand owners confirm their domains and helplines. Feeds go to TDRA / aeCERT, registrars and APWG eCX.
 
 ## Credits

@@ -76,3 +76,13 @@ def test_scoring_tiers_and_overrides():
     assert unknown["tier"] == "not_verified" and unknown["tier_en"].startswith("No record")
     phone = finalize([reason("ALLOW_OFFICIAL", "x"), reason("QUERY_PHONE", "800123456")], official=True, known_bad=False)
     assert phone["tier"] != "official"
+
+
+def test_safe_links_are_signed_and_rewritten():
+    from app import safelinks
+    out = safelinks.protect("RTA: pay your fine at hxxps://rta-fines[.]top/pay now.", "https://cg.example/")
+    assert len(out["links"]) == 1 and out["links"][0]["original"] == "https://rta-fines.top/pay"
+    assert out["protected_text"].startswith("RTA: pay your fine at https://cg.example/go?u=") and out["protected_text"].endswith(" now.")
+    assert safelinks.valid("https://rta-fines.top/pay", safelinks.sign("https://rta-fines.top/pay"))
+    assert not safelinks.valid("https://evil.example/", safelinks.sign("https://rta-fines.top/pay"))
+    assert not safelinks.valid("https://evil.example/", "")

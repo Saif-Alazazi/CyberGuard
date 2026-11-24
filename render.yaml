@@ -30,3 +30,5 @@ services:
         sync: false
       - key: CYBERGUARD_API_KEY
         sync: false
+      - key: CYBERGUARD_LINK_SECRET
+        generateValue: true

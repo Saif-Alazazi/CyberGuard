@@ -21,19 +21,36 @@ def defang(text: str) -> str:
     return text
 
 
+_AR_DIGITS = str.maketrans({c: str(i) for i, c in enumerate("٠١٢٣٤٥٦٧٨٩")})
+
+
+def _as_url(match: str) -> str | None:
+    u = match.rstrip(_TRAIL)
+    host = re.sub(r"^https?://", "", u, flags=re.I).split("/")[0].split("@")[-1].split(":")[0]
+    if "." not in host or host.replace(".", "").isdigit() and host.count(".") != 3:
+        return None
+    return u if u.lower().startswith("http") else "http://" + u
+
+
 def extract_urls(text: str) -> list[str]:
-    text = defang(text).translate(str.maketrans({c: str(i) for i, c in enumerate("٠١٢٣٤٥٦٧٨٩")}))
     found = []
-    for m in _URL.finditer(text):
-        u = m.group(0).rstrip(_TRAIL)
-        host = re.sub(r"^https?://", "", u, flags=re.I).split("/")[0].split("@")[-1].split(":")[0]
-        if "." not in host or host.replace(".", "").isdigit() and host.count(".") != 3:
-            continue
-        if not u.lower().startswith("http"):
-            u = "http://" + u
-        if u not in found:
+    for m in _URL.finditer(defang(text).translate(_AR_DIGITS)):
+        u = _as_url(m.group(0))
+        if u and u not in found:
             found.append(u)
     return found[:20]
+
+
+def rewrite_urls(text: str, fn) -> str:
+    """Replace every link in the (defanged) text with fn(url), keeping trailing punctuation."""
+    def repl(m: re.Match) -> str:
+        raw = m.group(0)
+        u = _as_url(raw)
+        if not u:
+            return raw
+        core = raw.rstrip(_TRAIL)
+        return fn(u) + raw[len(core):]
+    return _URL.sub(repl, defang(text).translate(_AR_DIGITS))
 
 
 def looks_like_single_url(text: str) -> bool:

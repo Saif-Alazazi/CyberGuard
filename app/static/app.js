@@ -233,6 +233,28 @@ async function loadGraph() {
       el("div", { class: "muted small", text: c.shared.join(" · ") }))))) : "");
 }
 
+async function protect() {
+  const text = $("#safe-input").value.trim();
+  if (text.length < 3) return;
+  $("#safe-status").textContent = "…";
+  const r = await fetch("/api/protect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+  const j = await r.json();
+  $("#safe-status").textContent = r.ok ? "" : t("error") + (j.detail || r.status);
+  if (!r.ok) return;
+  let rest = j.protected_text;
+  const parts = [];
+  for (const l of j.links) {
+    const i = rest.indexOf(l.safe_link);
+    if (i < 0) continue;
+    parts.push(rest.slice(0, i), el("a", { href: l.safe_link, target: "_blank", rel: "noopener", class: "mono", text: l.original + "  🛡" }));
+    rest = rest.slice(i + l.safe_link.length);
+  }
+  parts.push(rest);
+  $("#safe-out").replaceChildren(el("h3", { text: t("safe_out") }), el("div", { class: "card msg protected", dir: "auto" }, parts),
+    el("details", {}, el("summary", { text: t("safe_links") }),
+      el("ul", {}, j.links.map((l) => el("li", { class: "mono small", dir: "ltr", text: l.safe_link })))));
+}
+
 document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => {
   document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x === b));
   document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("active", p.id === "tab-" + b.dataset.tab));
@@ -243,5 +265,8 @@ $("#lang").addEventListener("click", () => { lang = lang === "en" ? "ar" : "en";
 $("#go").addEventListener("click", scan);
 $("#input").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) scan(); });
 $("#batch-go").addEventListener("click", batch);
+$("#safe-go").addEventListener("click", protect);
+$("#safe-input").value = "RTA: unpaid traffic fine AED 50, pay now to avoid AED 500: https://rta.gov.ae-pay.top/fines\n" +
+  "FAB: view your statement at https://www.bankfab.com/en-ae/personal";
 try { lang = localStorage.getItem("cg-lang") || "en"; } catch (e) { lang = "en"; }
 applyLang();

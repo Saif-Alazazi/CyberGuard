@@ -1,5 +1,8 @@
 const I18N = {
   en: {
+    tab_safe: "Safe Links", safe_title: "Safe Links - protection at the moment of the click",
+    safe_sub: "A telecom SMS gateway, a bank or a messaging bot rewrites every link through CyberGuard. Each tap is checked at that moment: clean and official links open instantly, scam links show a bilingual warning with a one-tap Aman report. Paste a message and tap the protected links below.",
+    safe_btn: "Protect this message", safe_out: "Protected message (tap the links):", safe_links: "Rewritten links",
     tagline: "UAE scam-link intelligence", tab_scan: "Check a link", tab_batch: "Batch", tab_warnings: "Early warnings", tab_graph: "Scam network",
     scan_title: "Check a link or a message before you click",
     scan_sub: "Paste a URL or the full SMS / WhatsApp / email text. CyberGuard unrolls redirects, checks the UAE official-domain list, look-alikes, threat feeds and domain age, then explains its verdict in English and Arabic.",
@@ -27,6 +30,9 @@ const I18N = {
     tiers: { official: "Official domain", high_risk: "High-risk scam", likely_scam: "Likely scam", suspicious: "Suspicious", not_verified: "No record - not verified" }
   },
   ar: {
+    tab_safe: "روابط آمنة", safe_title: "روابط آمنة - حماية لحظة الضغط على الرابط",
+    safe_sub: "تقوم بوابة الرسائل لدى مزود الاتصالات أو البنك أو روبوت المراسلة بتمرير كل رابط عبر سايبر جارد. يُفحص الرابط لحظة الضغط عليه: الروابط الرسمية والسليمة تُفتح فوراً، وروابط الاحتيال تعرض تحذيراً بالعربية والإنجليزية مع إبلاغ أمان بضغطة واحدة. الصق رسالة واضغط على الروابط المحمية أدناه.",
+    safe_btn: "احمِ هذه الرسالة", safe_out: "الرسالة المحمية (اضغط على الروابط):", safe_links: "الروابط بعد إعادة الكتابة",
     tagline: "استخبارات روابط الاحتيال في الإمارات", tab_scan: "فحص رابط", tab_batch: "فحص جماعي", tab_warnings: "إنذارات مبكرة", tab_graph: "شبكة الاحتيال",
     scan_title: "افحص الرابط أو الرسالة قبل أن تضغط",
     scan_sub: "الصق رابطاً أو نص الرسالة كاملاً (SMS / واتساب / بريد). يتتبع سايبر جارد إعادة التوجيه ويقارن بقائمة النطاقات الرسمية في الإمارات ويكشف النطاقات المشابهة ويفحص مصادر التهديد وعمر النطاق، ثم يشرح النتيجة بالعربية والإنجليزية.",

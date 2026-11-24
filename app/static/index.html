@@ -19,6 +19,7 @@
     </div>
     <nav class="tabs" role="tablist">
       <button class="tab active" data-tab="scan" data-i18n="tab_scan"></button>
+      <button class="tab" data-tab="safelinks" data-i18n="tab_safe"></button>
       <button class="tab" data-tab="batch" data-i18n="tab_batch"></button>
       <button class="tab" data-tab="warnings" data-i18n="tab_warnings"></button>
       <button class="tab" data-tab="graph" data-i18n="tab_graph"></button>
@@ -45,6 +46,16 @@
     </div>
     <div id="status" class="status" hidden></div>
     <div id="results"></div>
+  </section>
+
+  <section id="tab-safelinks" class="panel">
+    <div class="card">
+      <h2 data-i18n="safe_title"></h2>
+      <p class="muted" data-i18n="safe_sub"></p>
+      <textarea id="safe-input" rows="3" dir="auto"></textarea>
+      <div class="row"><button id="safe-go" class="primary" data-i18n="safe_btn"></button><span id="safe-status" class="muted"></span></div>
+      <div id="safe-out"></div>
+    </div>
   </section>
 
   <section id="tab-batch" class="panel">

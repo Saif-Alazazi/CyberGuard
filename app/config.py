@@ -1,5 +1,6 @@
 """Runtime settings, read once from the environment (.env locally, dashboard vars on Render)."""
 import os
+import secrets
 import ssl
 from pathlib import Path
 
@@ -22,6 +23,8 @@ URLHAUS_AUTH_KEY = os.environ.get("URLHAUS_AUTH_KEY", "")
 IPINFO_TOKEN = os.environ.get("IPINFO_TOKEN", "")
 SERPAPI_KEY = os.environ.get("SERPAPI_KEY", "")
 API_KEY = os.environ.get("CYBERGUARD_API_KEY", "")
+# Signs Safe Links (/go). Set a fixed value in production so issued links survive restarts.
+LINK_SECRET = os.environ.get("CYBERGUARD_LINK_SECRET") or secrets.token_hex(32)
 
 # Feeds can be switched off for honest evaluation (OpenPhish URLs would otherwise match the OpenPhish feed).
 FEEDS_ENABLED = os.environ.get("CYBERGUARD_DISABLE_FEEDS", "") != "1"
@@ -36,7 +39,7 @@ MAX_BODY = 1_000_000
 FAST_BUDGET = 6.0
 USER_AGENT = ("Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 "
               "(KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1")
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 # One TLS context for every outbound client: building it per request costs ~100 ms CPU.
 SSL_CTX = ssl.create_default_context(cafile=certifi.where())
 NO_VERIFY_CTX = ssl.create_default_context()
