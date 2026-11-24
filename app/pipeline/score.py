@@ -80,6 +80,8 @@ def finalize(reasons: list[dict], official: bool, known_bad: bool) -> dict:
         tier = next(t for lim, t in TIERS if score >= lim)
     label = "fraud" if (score >= config.THRESHOLD and tier != "official") else "legit"
     en, ar = TIER_TEXT[tier]
-    top = [r for r in rs if r["weight"] > 0 or r["code"] == "ALLOW_OFFICIAL"][:3] or rs[:3]
+    first = {"official": "ALLOW_OFFICIAL"}.get(tier) or ("KNOWN_BAD" if known_bad else "")
+    rs.sort(key=lambda r: (r["code"] != first, -abs(r["weight"])))
+    top = [r for r in rs if r["weight"] > 0 or r["code"] in ("ALLOW_OFFICIAL", "KNOWN_BAD")][:3] or rs[:3]
     return {"score": score, "tier": tier, "tier_en": en, "tier_ar": ar, "label": label, "threshold": config.THRESHOLD,
             "reasons": rs, "top_reasons": top}

@@ -218,10 +218,11 @@ async function loadGraph() {
   if (!linked || typeof vis === "undefined") {
     box.replaceChildren(el("p", { class: "muted", text: t("no_graph") }));
   } else {
+    const ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim();
     const color = (n) => n.kind !== "domain" ? "#94a3b8" : n.score >= 75 ? "#c0262d" : n.score >= 50 ? "#d9622b" : n.score >= 25 ? "#c99a06" : "#6b7280";
     const nodes = new vis.DataSet(g.nodes.map((n) => ({ id: n.id, label: n.label.length > 32 ? n.label.slice(0, 30) + "…" : n.label,
       title: `${n.kind}: ${n.label}${n.score != null ? " · score " + n.score : ""}`, shape: n.kind === "domain" ? "dot" : "diamond",
-      size: n.kind === "domain" ? 10 + (n.score || 0) / 8 : 8, color: color(n), font: { size: 11 } })));
+      size: n.kind === "domain" ? 10 + (n.score || 0) / 8 : 8, color: color(n), font: { size: 11, color: ink } })));
     const edges = new vis.DataSet(g.edges.map((e, i) => ({ id: i, from: e.from, to: e.to, title: e.kind, color: { color: "#cbd5e1" } })));
     network = new vis.Network(box, { nodes, edges }, { physics: { stabilization: { iterations: 150 } }, interaction: { hover: true } });
   }
