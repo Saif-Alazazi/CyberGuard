@@ -32,7 +32,7 @@ def _prefilter():
     return lambda dom: "xn--" in dom or any(s in dom for s in stems)
 
 
-def whoisds(days_back: int = 1) -> list[dict]:
+def whoisds(days_back: int = 1, stats: dict | None = None) -> list[dict]:
     """Download yesterday's free WhoisDS NRD list and keep UAE brand look-alikes."""
     day = (datetime.now(timezone.utc) - timedelta(days=days_back)).strftime("%Y-%m-%d")
     token = base64.b64encode(f"{day}.zip".encode()).decode()
@@ -50,10 +50,12 @@ def whoisds(days_back: int = 1) -> list[dict]:
             hits.append({"domain": dom, "source": "nrd", "first_seen": f"{day}T00:00:00+00:00",
                          "detail": f"registered {day}; looks like {', '.join(sorted({x['brand'] for x in b}))} "
                                    f"({len(names)} new domains screened)"})
+    if stats is not None:
+        stats.update(registration_day=day, domains_screened=len(names), lookalikes=len(hits))
     return hits
 
 
-def crtsh(tokens: list[str] | None = None, max_age_days: int = 30) -> list[dict]:
+def crtsh(tokens: list[str] | None = None, max_age_days: int = 30, stats: dict | None = None) -> list[dict]:
     """Search CT logs for recent certificates naming UAE brand tokens outside official domains."""
     since = datetime.now(timezone.utc) - timedelta(days=max_age_days)
     hits: dict[str, dict] = {}
@@ -89,4 +91,6 @@ def crtsh(tokens: list[str] | None = None, max_age_days: int = 30) -> list[dict]
                     if _is_uae_lookalike(name):
                         hits[name] = {"domain": name, "source": "ct", "first_seen": nb.isoformat(),
                                       "detail": f"TLS certificate issued {nb:%Y-%m-%d} by {row.get('issuer_name', '')[:60]}"}
+    if stats is not None:
+        stats.update(brand_queries=len(tokens or CT_TOKENS), unavailable=failures >= 2, lookalikes=len(hits))
     return list(hits.values())

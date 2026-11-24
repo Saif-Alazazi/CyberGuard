@@ -196,6 +196,12 @@ def api_warnings():
     return store.warnings()
 
 
+@app.get("/api/coverage")
+def api_coverage():
+    """What each watcher checked on its last run (so 0 hits is visibly 'checked, nothing found')."""
+    return store.coverage()
+
+
 @app.post("/api/watchers/run", dependencies=[Depends(require_key)])
 async def api_watchers(background: BackgroundTasks, serp: bool = False):
     from watchers.run_all import run_watchers_async

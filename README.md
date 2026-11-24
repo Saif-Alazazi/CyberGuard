@@ -39,7 +39,7 @@ CyberGuard is an ordered funnel. Cheap, deterministic layers decide most links. 
 | 8 | Score | Weighted reason codes give a 0-100 score. Overrides: an official domain is capped at 10; a known-bad hit scores at least 90. Tiers follow Scameter's colours. Every reason has English and Arabic text. |
 | 9 | Evidence pack | PDF (English + Arabic), JSON and STIX 2.1. Includes original and final URL, redirect chain, screenshot, WHOIS / registrar abuse contact, IP / ASN, UTC + GST timestamps, SHA-256 hashes, the impersonated brand and its official domain, and suggested actions (Aman 800 2626, registrar / Cloudflare abuse, CERT sharing). |
 | 10 | Scam network | A networkx graph links domains through shared IP, nameserver, favicon, phone number, form target or redirect. Common infrastructure (Cloudflare anycast, big DNS hosts) is excluded. A new link to a known scam node adds `INFRA_LINK`. |
-| W | Watchers | WhoisDS newly registered domains + crt.sh certificates filtered for UAE look-alikes, and a bilingual SerpApi pack for Google search, ads and Maps (fake helplines). Every hit is auto-scanned and shown in **Early warnings** with first-seen time and blocklist status. The server runs the new-domain + certificate sweep automatically 90 s after start-up and then every 24 h; the SerpApi probe runs on demand (`POST /api/watchers/run?serp=true`) to respect its quota. |
+| W | Watchers | WhoisDS newly registered domains + crt.sh certificates filtered for UAE look-alikes, and a bilingual SerpApi pack for Google search, ads and Maps (fake helplines). Every hit is auto-scanned and shown in **Early warnings** with first-seen time and blocklist status, plus coverage cards showing what each source checked (e.g. 70,000 new domains screened; 12 searches, 77 results and 44 Maps listings with 43 phone numbers checked). The server runs the new-domain + certificate sweep automatically 90 s after start-up and then every 24 h; the SerpApi probe runs on demand (`POST /api/watchers/run?serp=true`) to respect its quota. |
 | S | Safe Links | Click-time protection. A sender (telecom SMS gateway, bank notification system, messaging bot) rewrites every link through `/go?u=…&s=…`, signed with an HMAC server secret (`POST /api/protect`). When someone taps it, CyberGuard scans the link at that moment: a signed link that is not flagged redirects instantly; a flagged link shows a bilingual warning page with the score, reasons, the real official site, a pre-filled report to Aman and the evidence PDF. Unsigned links are never auto-redirected, so the gateway cannot be abused as an open redirect. |
 
 **Fast mode** (layers 0-5 + score) is about 1 s median per URL and is the default for batch and CLI. When a fast scan lands in the grey zone (score 10-24) and the site is online, CyberGuard takes a quick look at the page without a screenshot; only strong evidence counts there (a password / OTP / card / Emirates ID form, a brand claim together with such a form, or Telegram exfiltration). **Deep mode** adds layers 6-7 (up to ~45 s, mostly waiting for the Cloudflare scan).
@@ -147,6 +147,7 @@ The free instance sleeps after 15 minutes idle, so the first request after sleep
 | GET | `/go?u=<url>&s=<sig>` | click-time check: redirect if signed and not flagged, otherwise the bilingual warning page |
 | GET | `/api/graph` | scam-network nodes, edges and campaigns |
 | GET | `/api/early-warnings` | watcher hits |
+| GET | `/api/coverage` | what each watcher checked on its last run (domains screened, searches, Maps listings, phones) |
 | GET | `/health` | liveness, which optional layers are configured, and the last automatic watcher sweep |
 
 ## Tools, APIs and data
@@ -163,7 +164,7 @@ The free instance sleeps after 15 minutes idle, so the first request after sleep
 - **`.ae` domain age:** aeDA WHOIS does not publish a creation date, so `.ae` age shows as unknown.
 - **The LLM** can misjudge benign pages and is exposed to prompt injection, so it only names the brand; code decides, and only for borderline scores.
 - **Allowlist and helpline registry** need ongoing input from the entities themselves. Several helplines are marked `unverified` and are not treated as known-good.
-- **Certificate Transparency** depends on the public crt.sh service, which was frequently unavailable (HTTP 502) during the build; the watcher retries and otherwise skips it.
+- **Certificate Transparency** depends on the public crt.sh service, which was frequently unavailable (HTTP 502) during the build; the watcher retries and otherwise skips it. Its free public database was also tried as a backup, but a brand search exceeds that database's 50-second query limit.
 - **Search / ads / Maps coverage** is limited by the free SerpApi quota (250 searches a month). Maps branch phone numbers that are not in the registry are flagged for analyst review, not as confirmed fakes.
 - **Free-hosting heuristics** ("machine-generated site name") were measured on only 25 legitimate hosted pages; legitimate preview deployments with random names could be flagged as Suspicious.
 - **Ephemeral storage on Render free:** scan history resets on restart.

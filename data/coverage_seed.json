@@ -1,0 +1,30 @@
+{
+ "nrd": {
+  "run_utc": "2026-11-24T22:08:38+00:00",
+  "stats": {
+   "registration_day": "2026-11-23",
+   "domains_screened": 70000,
+   "lookalikes": 4
+  }
+ },
+ "ct": {
+  "run_utc": "2026-11-24T22:14:47+00:00",
+  "stats": {
+   "brand_queries": 17,
+   "unavailable": false,
+   "lookalikes": 0
+  }
+ },
+ "search_maps": {
+  "run_utc": "2026-11-24T22:15:07+00:00",
+  "stats": {
+   "searches": 12,
+   "search_results": 77,
+   "ads": 0,
+   "maps_listings": 44,
+   "phones_checked": 43,
+   "candidates": 5,
+   "suspicious": 0
+  }
+ }
+}

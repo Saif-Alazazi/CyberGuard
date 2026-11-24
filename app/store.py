@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS scans(id TEXT PRIMARY KEY, created TEXT, input_url TE
 CREATE TABLE IF NOT EXISTS screenshots(id TEXT PRIMARY KEY, png BLOB);
 CREATE TABLE IF NOT EXISTS entities(scan_id TEXT, registrable TEXT, kind TEXT, value TEXT);
 CREATE INDEX IF NOT EXISTS ent_kv ON entities(kind, value);
+CREATE TABLE IF NOT EXISTS coverage(source TEXT PRIMARY KEY, run_utc TEXT, stats TEXT);
 CREATE TABLE IF NOT EXISTS early_warnings(domain TEXT PRIMARY KEY, source TEXT, first_seen TEXT, detail TEXT,
   score INTEGER, tier TEXT, blocklisted INTEGER, scan_id TEXT);
 """
@@ -44,6 +45,11 @@ def init() -> None:
         for line in scans.read_text(encoding="utf-8").splitlines():
             if line.strip():
                 save_scan(json.loads(line), None)
+    cov = DATA_DIR / "coverage_seed.json"
+    if cov.exists():  # last watcher run per source (incl. the on-demand search / Maps probe)
+        with conn() as c:
+            for src, v in json.loads(cov.read_text(encoding="utf-8")).items():
+                c.execute("INSERT OR IGNORE INTO coverage VALUES(?,?,?)", (src, v["run_utc"], json.dumps(v["stats"])))
     seed = DATA_DIR / "early_warnings_seed.json"
     if seed.exists():
         for w in json.loads(seed.read_text(encoding="utf-8")):
@@ -145,6 +151,19 @@ def add_warning(w: dict, replace: bool = True) -> None:
         c.execute(f"INSERT OR {'REPLACE' if replace else 'IGNORE'} INTO early_warnings VALUES(?,?,?,?,?,?,?,?)",
                   (w["domain"], w["source"], w["first_seen"], w.get("detail", ""), w.get("score"), w.get("tier"),
                    int(bool(w.get("blocklisted"))), w.get("scan_id")))
+
+
+def set_coverage(source: str, stats: dict) -> None:
+    from datetime import datetime, timezone
+    with conn() as c:
+        c.execute("INSERT OR REPLACE INTO coverage VALUES(?,?,?)",
+                  (source, datetime.now(timezone.utc).isoformat(timespec="seconds"), json.dumps(stats)))
+
+
+def coverage() -> dict:
+    with conn() as c:
+        rows = c.execute("SELECT source, run_utc, stats FROM coverage").fetchall()
+    return {r["source"]: {"run_utc": r["run_utc"], "stats": json.loads(r["stats"])} for r in rows}
 
 
 def warnings(limit: int = 100) -> list[dict]:

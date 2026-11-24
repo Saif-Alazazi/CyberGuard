@@ -7,7 +7,7 @@
   "score": 80,
   "tier": "high_risk",
   "blocklisted": false,
-  "scan_id": "CG-20261124-240CCA"
+  "scan_id": "CG-20261124-6CBEF9"
  },
  {
   "domain": "3dewa.sbs",
@@ -17,7 +17,7 @@
   "score": 65,
   "tier": "likely_scam",
   "blocklisted": false,
-  "scan_id": "CG-20261124-614DA7"
+  "scan_id": "CG-20261124-D5B3F6"
  },
  {
   "domain": "3dewa.online",
@@ -27,7 +27,7 @@
   "score": 65,
   "tier": "likely_scam",
   "blocklisted": false,
-  "scan_id": "CG-20261124-2C594B"
+  "scan_id": "CG-20261124-0DE42D"
  },
  {
   "domain": "salilk.net",
@@ -37,6 +37,6 @@
   "score": 60,
   "tier": "likely_scam",
   "blocklisted": false,
-  "scan_id": "CG-20261124-9936B3"
+  "scan_id": "CG-20261124-6B1B0A"
  }
 ]

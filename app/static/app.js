@@ -192,13 +192,26 @@ function gst(iso) {
   try { return new Date(iso).toLocaleString("en-GB", { timeZone: "Asia/Dubai", dateStyle: "medium", timeStyle: "short" }); } catch (e) { return iso; }
 }
 
+let lastCoverage = null;
 async function loadWarnings() {
-  const r = await fetch("/api/early-warnings");
-  lastWarnings = await r.json();
+  const [w, c] = await Promise.all([fetch("/api/early-warnings"), fetch("/api/coverage")]);
+  lastWarnings = await w.json();
+  lastCoverage = await c.json();
   renderWarnings(lastWarnings);
 }
 
+function renderCoverage(cov) {
+  const items = [["nrd", "cov_nrd", "cov_nrd_txt"], ["ct", "cov_ct", "cov_ct_txt"], ["search_maps", "cov_sm", "cov_sm_txt"]];
+  $("#coverage").replaceChildren(...items.filter(([k]) => cov[k]).map(([k, head, txt]) => {
+    const s = cov[k].stats;
+    return el("div", { class: "cov" }, el("b", { text: t(head) }),
+      el("div", { class: "small", text: s.error ? s.error : I18N[lang][txt](s) }),
+      el("div", { class: "muted small", text: `${t("cov_last")}: ${gst(cov[k].run_utc)}` }));
+  }));
+}
+
 function renderWarnings(ws) {
+  if (lastCoverage) renderCoverage(lastCoverage);
   if (!ws.length) { $("#warn-table").replaceChildren(el("p", { class: "muted", text: t("no_warn") })); return; }
   $("#warn-table").replaceChildren(el("table", {},
     el("thead", {}, el("tr", {}, ["w_domain", "w_source", "w_first", "w_score", "w_block", "w_detail"].map((k) => el("th", { text: t(k) })))),

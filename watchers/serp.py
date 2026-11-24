@@ -60,15 +60,22 @@ def _check(title: str, snippet: str, link: str, phone: str, source: str, query: 
             "detail": f"{detail} (query: {query})", "phones": bad_phones}
 
 
-def probe() -> list[dict]:
+def probe(stats: dict | None = None) -> list[dict]:
+    """Run the query pack; `stats` (if given) is filled with what was checked, so coverage is visible even with 0 hits."""
+    stats = stats if stats is not None else {}
     if not config.SERPAPI_KEY:
+        stats["error"] = "no SERPAPI_KEY"
         return []
+    stats.update(searches=0, search_results=0, ads=0, maps_listings=0, phones_checked=0)
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     hits: list[dict] = []
     with httpx.Client(timeout=40) as c:
         for q, hl in WEB_QUERIES:
             j = c.get("https://serpapi.com/search.json", params={"engine": "google", "q": q, "gl": "ae", "hl": hl,
                                                                    "google_domain": "google.ae", "api_key": config.SERPAPI_KEY}).json()
+            stats["searches"] += 1
+            stats["ads"] += len(j.get("ads", []))
+            stats["search_results"] += len(j.get("organic_results", [])[:10])
             for kind, items in (("search_ad", j.get("ads", [])), ("search", j.get("organic_results", [])[:10])):
                 for it in items:
                     h = _check(it.get("title", ""), it.get("snippet", "") or it.get("description", ""), it.get("link", ""),
@@ -79,9 +86,13 @@ def probe() -> list[dict]:
             j = c.get("https://serpapi.com/search.json", params={"engine": "google_maps", "q": q, "hl": hl,
                                                                    "ll": "@24.4539,54.3773,10z", "type": "search",
                                                                    "api_key": config.SERPAPI_KEY}).json()
+            stats["searches"] += 1
+            stats["maps_listings"] += len(j.get("local_results", [])[:15])
+            stats["phones_checked"] += sum(1 for it in j.get("local_results", [])[:15] if it.get("phone"))
             for it in j.get("local_results", [])[:15]:
                 h = _check(it.get("title", ""), f"{it.get('type', '')} {it.get('address', '')}", it.get("website", ""),
                            it.get("phone", ""), "maps", q, now)
                 if h:
                     hits.append(h)
+    stats["candidates"] = len(hits)  # brand claimed off-domain or unlisted phone; scanned before being kept
     return hits
