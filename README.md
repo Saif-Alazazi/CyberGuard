@@ -91,6 +91,8 @@ flowchart LR
 | Held-out OpenPhish only, feeds OFF | 1317 | 1.000 | 0.747 | 0.855 | 0.000% | 984 | 0 | 333 | 0 |
 | Tuning sample + all legit, feeds ON | 1559 | 1.000 | 0.908 | 0.952 | 0.000% | 970 | 0 | 98 | 491 |
 | Held-out OpenPhish only, feeds ON | 1317 | 1.000 | 0.913 | 0.954 | 0.000% | 1202 | 0 | 115 | 0 |
+| Tuning sample + all legit, feeds ON + Google Safe Browsing | 1559 | 1.000 | 0.924 | 0.961 | 0.000% | 987 | 0 | 81 | 491 |
+| Held-out OpenPhish only, feeds ON + Google Safe Browsing | 1317 | 1.000 | 0.919 | 0.958 | 0.000% | 1210 | 0 | 107 | 0 |
 | UAE legit links only (official + business) | 326 | - | - | - | 0.000% | 0 | 0 | 0 | 326 |
 | Smishing Triad IOCs only, feeds OFF | 68 | 1.000 | 0.794 | 0.885 | 0.000% | 54 | 0 | 14 | 0 |
 | UAE synthetic patterns (not in headline), feeds OFF | 30 | 1.000 | 1.000 | 1.000 | 0.000% | 30 | 0 | 0 | 0 |
@@ -102,7 +104,7 @@ Held-out rows contain only fraud URLs, so their precision is trivially 1.0; thei
 **How to read this honestly**
 
 - Weights were tuned on the 1,000-URL OpenPhish sample. The **held-out** 1,317 OpenPhish URLs were never looked at during tuning; their recall is the best estimate of performance on unseen phishing.
-- With feeds ON, part of OpenPhish recall comes from the OpenPhish feed itself, so the **feeds OFF** rows are the honest measure of the detection layers alone.
+- Google Safe Browsing rows need the optional `GOOGLE_SAFE_BROWSING_KEY` (free). With feeds ON, part of OpenPhish recall comes from public blocklists that also ingest OpenPhish, so the **feeds OFF** rows are the honest measure of the detection layers alone.
 - Official UAE domains are capped by design, so a 0% FPR on `uae_official` is expected. The `uae_business` slice (UAE sites **not** in the allowlist) is the real test that local legitimate sites are not flagged.
 - This is our own validation set, not UAE ground truth. The hidden judging set will differ.
 
