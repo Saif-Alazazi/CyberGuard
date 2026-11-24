@@ -22,6 +22,9 @@ STATIC = config.ROOT / "app" / "static"
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     store.init()
+    if config.FEEDS_ENABLED:
+        from app.pipeline.feeds import load_bulk
+        asyncio.create_task(load_bulk())  # warm the bulk blocklists so the first scans don't wait for the download
     watcher = None
     if config.WATCHERS_ENABLED:
         from watchers.run_all import watch_forever

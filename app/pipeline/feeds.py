@@ -1,15 +1,61 @@
-"""Layer 3: known-bad lookups (OpenPhish, URLhaus, Cloudflare 1.1.1.2 filtering DNS) and plain DNS."""
+"""Layer 3: known-bad lookups and plain DNS.
+
+Live per-link: OpenPhish (current feed), URLhaus, ThreatFox (abuse.ch), Cloudflare 1.1.1.2 filtering DNS.
+Bulk domain lists, refreshed every 6 h: Phishing.Database (active phishing domains) and Phishing Army.
+A listed domain never overrides the official / popular / shared-hosting protections.
+"""
 import asyncio
 import time
 
 import httpx
 
 from app import config
-from app.data import data
+from app.data import data, split_host
 
 _OPENPHISH = "https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt"
 _state = {"urls": set(), "hosts": set(), "loaded": 0.0}
 _lock = asyncio.Lock()
+BULK_LISTS = {
+    "Phishing.Database": "https://raw.githubusercontent.com/Phishing-Database/Phishing.Database/master/phishing-domains-ACTIVE.txt",
+    "Phishing Army": "https://phishing.army/download/phishing_army_blocklist_extended.txt",
+}
+_bulk = {"sets": {}, "loaded": 0.0, "sizes": {}}
+_bulk_lock = asyncio.Lock()
+
+
+async def load_bulk() -> dict:
+    """Download the bulk domain lists (every 6 h). Kept as frozensets: ~540k domains, roughly 60 MB of RAM."""
+    async with _bulk_lock:
+        if time.time() - _bulk["loaded"] > 6 * 3600:
+            async with httpx.AsyncClient(timeout=60, verify=config.SSL_CTX, follow_redirects=True) as c:
+                for name, url in BULK_LISTS.items():
+                    try:
+                        r = await c.get(url)
+                        r.raise_for_status()
+                        s = frozenset(l.strip().lower() for l in r.text.splitlines() if l.strip() and not l.startswith("#"))
+                        _bulk["sets"][name] = s
+                        _bulk["sizes"][name] = len(s)
+                    except httpx.HTTPError:
+                        pass  # keep the previous copy; retried at the next refresh
+            _bulk["loaded"] = time.time() if _bulk["sets"] else time.time() - 5 * 3600
+    return _bulk["sets"]
+
+
+def _bulk_candidates(host: str) -> list[str]:
+    """Host and its parent domains, stopping before anything official, popular or a shared-hosting apex."""
+    d = data()
+    reg = split_host(host)[3]
+    if d.official_brand(reg) or d.tranco_rank(reg) or d.global_official(reg):
+        return []
+    out, parts = [], host.split(".")
+    for i in range(len(parts) - 1):
+        cand = ".".join(parts[i:])
+        if d.hosting_suffix(cand) == cand or d.is_shortener(cand):
+            break
+        out.append(cand)
+        if cand == reg:
+            break
+    return out
 
 
 async def _openphish() -> tuple[set, set]:
@@ -56,8 +102,12 @@ async def lookup(url: str, host: str, registrable: str, check_host: bool) -> dic
         if config.FEEDS_ENABLED:
             tasks["cf_filter"] = doh(c, "https://security.cloudflare-dns.com/dns-query", host)
             tasks["openphish"] = _openphish()
+            tasks["bulk"] = load_bulk()
             if config.URLHAUS_AUTH_KEY:
                 hdr = {"Auth-Key": config.URLHAUS_AUTH_KEY}
+                if check_host:
+                    tasks["threatfox"] = c.post("https://threatfox-api.abuse.ch/api/v1/", headers=hdr,
+                                                json={"query": "search_ioc", "search_term": host, "exact_match": True})
                 tasks["urlhaus_url"] = c.post("https://urlhaus-api.abuse.ch/v1/url/", data={"url": url}, headers=hdr)
                 if check_host:
                     tasks["urlhaus_host"] = c.post("https://urlhaus-api.abuse.ch/v1/host/", data={"host": host}, headers=hdr)
@@ -76,6 +126,18 @@ async def lookup(url: str, host: str, registrable: str, check_host: bool) -> dic
             hits.append({"source": "OpenPhish", "match": "exact URL"})
         elif check_host and host in hosts:
             hits.append({"source": "OpenPhish", "match": "host"})
+    bulk = results.get("bulk")
+    if isinstance(bulk, dict):
+        cands = _bulk_candidates(host)
+        for name, s in bulk.items():
+            m = next((c for c in cands if c in s), None)
+            if m:
+                hits.append({"source": name, "match": "domain" if m == host else f"parent domain {m}"})
+    tf = results.get("threatfox")
+    if isinstance(tf, httpx.Response) and tf.status_code == 200:
+        j = tf.json()
+        if j.get("query_status") == "ok" and isinstance(j.get("data"), list) and j["data"]:
+            hits.append({"source": "ThreatFox", "match": f"host ({j['data'][0].get('threat_type', 'malicious')})"})
     for key, label in (("urlhaus_url", "URL"), ("urlhaus_host", "host")):
         r = results.get(key)
         if isinstance(r, httpx.Response) and r.status_code == 200:

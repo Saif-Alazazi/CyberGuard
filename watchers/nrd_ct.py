@@ -32,26 +32,31 @@ def _prefilter():
     return lambda dom: "xn--" in dom or any(s in dom for s in stems)
 
 
-def whoisds(days_back: int = 1, stats: dict | None = None) -> list[dict]:
-    """Download yesterday's free WhoisDS NRD list and keep UAE brand look-alikes."""
-    day = (datetime.now(timezone.utc) - timedelta(days=days_back)).strftime("%Y-%m-%d")
-    token = base64.b64encode(f"{day}.zip".encode()).decode()
-    r = httpx.get(f"https://www.whoisds.com//whois-database/newly-registered-domains/{token}/nrd", timeout=60,
-                  follow_redirects=True)
-    r.raise_for_status()
-    with zipfile.ZipFile(io.BytesIO(r.content)) as z:
-        names = z.read(z.namelist()[0]).decode("utf-8", "replace").split()
-    hits = []
+def whoisds(days: int = 4, stats: dict | None = None) -> list[dict]:
+    """Screen the free WhoisDS lists of domains registered in the last `days` days for UAE brand look-alikes."""
+    hits, screened, covered = [], 0, []
     worth_checking = _prefilter()
-    for dom in names:
-        dom = dom.strip().lower()
-        b = _is_uae_lookalike(dom) if worth_checking(dom) else []
-        if b:
-            hits.append({"domain": dom, "source": "nrd", "first_seen": f"{day}T00:00:00+00:00",
-                         "detail": f"registered {day}; looks like {', '.join(sorted({x['brand'] for x in b}))} "
-                                   f"({len(names)} new domains screened)"})
+    with httpx.Client(timeout=60, follow_redirects=True) as c:
+        for back in range(1, days + 1):
+            day = (datetime.now(timezone.utc) - timedelta(days=back)).strftime("%Y-%m-%d")
+            token = base64.b64encode(f"{day}.zip".encode()).decode()
+            r = c.get(f"https://www.whoisds.com//whois-database/newly-registered-domains/{token}/nrd")
+            if r.status_code != 200 or not r.content.startswith(b"PK"):
+                continue
+            with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+                names = z.read(z.namelist()[0]).decode("utf-8", "replace").split()
+            screened += len(names)
+            covered.append(day)
+            for dom in names:
+                dom = dom.strip().lower()
+                b = _is_uae_lookalike(dom) if worth_checking(dom) else []
+                if b:
+                    hits.append({"domain": dom, "source": "nrd", "first_seen": f"{day}T00:00:00+00:00",
+                                 "detail": f"registered {day}; looks like {', '.join(sorted({x['brand'] for x in b}))}"})
+    if not covered:
+        raise RuntimeError("WhoisDS lists unavailable")
     if stats is not None:
-        stats.update(registration_day=day, domains_screened=len(names), lookalikes=len(hits))
+        stats.update(registration_day=f"{covered[-1]} to {covered[0]}", domains_screened=screened, lookalikes=len(hits))
     return hits
 
 

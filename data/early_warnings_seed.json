@@ -3,40 +3,70 @@
   "domain": "parkin.vip",
   "source": "nrd",
   "first_seen": "2026-11-23T00:00:00+00:00",
-  "detail": "registered 2026-11-23; looks like parkin (70000 new domains screened)",
+  "detail": "registered 2026-11-23; looks like parkin",
   "score": 80,
   "tier": "high_risk",
   "blocklisted": false,
-  "scan_id": "CG-20261124-6CBEF9"
+  "scan_id": "CG-20261124-5A8B2D"
  },
  {
   "domain": "3dewa.sbs",
   "source": "nrd",
   "first_seen": "2026-11-23T00:00:00+00:00",
-  "detail": "registered 2026-11-23; looks like dewa (70000 new domains screened)",
+  "detail": "registered 2026-11-23; looks like dewa",
   "score": 65,
   "tier": "likely_scam",
   "blocklisted": false,
-  "scan_id": "CG-20261124-D5B3F6"
+  "scan_id": "CG-20261124-6D56B8"
  },
  {
   "domain": "3dewa.online",
   "source": "nrd",
   "first_seen": "2026-11-23T00:00:00+00:00",
-  "detail": "registered 2026-11-23; looks like dewa (70000 new domains screened)",
+  "detail": "registered 2026-11-23; looks like dewa",
   "score": 65,
   "tier": "likely_scam",
   "blocklisted": false,
-  "scan_id": "CG-20261124-0DE42D"
+  "scan_id": "CG-20261124-7DB6EE"
  },
  {
   "domain": "salilk.net",
   "source": "nrd",
   "first_seen": "2026-11-23T00:00:00+00:00",
-  "detail": "registered 2026-11-23; looks like salik (70000 new domains screened)",
+  "detail": "registered 2026-11-23; looks like salik",
   "score": 60,
   "tier": "likely_scam",
   "blocklisted": false,
-  "scan_id": "CG-20261124-6B1B0A"
+  "scan_id": "CG-20261124-0E9857"
+ },
+ {
+  "domain": "dewa7.live",
+  "source": "nrd",
+  "first_seen": "2026-11-21T00:00:00+00:00",
+  "detail": "registered 2026-11-21; looks like dewa",
+  "score": 80,
+  "tier": "high_risk",
+  "blocklisted": false,
+  "scan_id": "CG-20261124-3CF7A6"
+ },
+ {
+  "domain": "payit.here",
+  "source": "nrd",
+  "first_seen": "2026-11-21T00:00:00+00:00",
+  "detail": "registered 2026-11-21; looks like fab",
+  "score": 20,
+  "tier": "not_verified",
+  "blocklisted": false,
+  "scan_id": "CG-20261124-AB8C41"
+ },
+ {
+  "domain": "dewa77.me",
+  "source": "nrd",
+  "first_seen": "2026-11-20T00:00:00+00:00",
+  "detail": "registered 2026-11-20; looks like dewa",
+  "score": 45,
+  "tier": "suspicious",
+  "blocklisted": false,
+  "scan_id": "CG-20261124-A0BA8F"
  }
 ]
