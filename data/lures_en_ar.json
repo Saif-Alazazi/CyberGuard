@@ -1,0 +1,42 @@
+{
+  "_about": "Bilingual UAE lure lexicon. weight 2 = verbatim/near-verbatim from cited police or vendor sources; weight 1 = constructed phrasing (lower confidence). Arabic entries are matched after normalisation (no diacritics/tatweel, unified alef/yaa).",
+  "categories": {
+    "traffic_fine": {
+      "en": [["unpaid traffic fine", 2], ["is due soon", 2], ["automatic addition", 2], ["pay immediately", 2], ["minimal fine", 2], ["parking violation", 2], ["licence renewal", 2], ["license renewal", 1], ["traffic fine discount", 2], ["unpaid parking", 2], ["traffic violation", 2], ["black points", 1], ["vehicle impound", 1], ["final notice", 1], ["legal action", 1], ["traffic points", 2]],
+      "ar": [["مخالفة مرورية", 1], ["مخالفات غير مدفوعة", 1], ["غرامة", 1], ["سداد المخالفة", 1], ["تسديد فوري", 1], ["خصم على المخالفات", 1], ["نقاط سوداء", 1], ["حجز المركبة", 1], ["رسوم مواقف", 1], ["اشعار نهائي", 1], ["اجراء قانوني", 1]]
+    },
+    "toll": {
+      "en": [["darb-alert", 2], ["pending status", 2], ["overdue toll", 2], ["toll fees", 2], ["reply y", 2], ["secure payment portal", 2], ["salik balance", 1], ["toll gate violation", 1]],
+      "ar": [["رسوم الطريق", 1], ["بوابات درب", 1], ["رسوم سالك", 1]]
+    },
+    "government_id": {
+      "en": [["investigation file number", 2], ["recorded line", 2], ["emirates id expired", 1], ["update your emirates id", 1], ["visa cancellation", 1], ["residency update", 1], ["uae pass verification", 1], ["account will be suspended", 1], ["court case", 1], ["travel ban", 1], ["residence visa", 2]],
+      "ar": [["تحديث بيانات الهوية", 1], ["الهوية الاماراتية منتهية", 1], ["تجديد الاقامة", 1], ["الغاء التاشيرة", 1], ["استخراج تاشيرات الاقامة", 2], ["منع سفر", 1], ["قضية", 1]]
+    },
+    "parcel": {
+      "en": [["package on hold", 1], ["parcel", 1], ["incomplete address", 1], ["redelivery fee", 1], ["customs fee", 1], ["delivery attempt failed", 1], ["delivery fee", 1], ["shipment", 1]],
+      "ar": [["شحنتك معلقة", 1], ["الطرد", 1], ["العنوان غير مكتمل", 1], ["رسوم التوصيل", 1], ["رسوم جمركية", 1], ["اعادة جدولة التسليم", 1], ["تتبع الشحنة", 2]]
+    },
+    "bank": {
+      "en": [["bank account verification", 2], ["refund", 2], ["you have won", 2], ["prize", 2], ["credit card offer", 2], ["reset password", 2], ["card blocked", 1], ["account frozen", 1], ["otp", 1], ["unusual activity", 1], ["kyc update", 1], ["reward points", 1], ["points expiring", 1], ["verify your account", 1]],
+      "ar": [["تحديث البيانات", 1], ["تم ايقاف حسابك", 1], ["تجميد الحساب", 1], ["تعليق البطاقة", 1], ["رمز التحقق", 1], ["كلمة المرور لمرة واحدة", 1], ["نشاط غير معتاد", 1], ["استرداد المبلغ", 1], ["نقاط المكافات", 1], ["استبدال النقاط", 1]]
+    },
+    "consumer_protection": {
+      "en": [["consumer protection", 2], ["remote access", 2], ["anydesk", 1], ["teamviewer", 1], ["file a complaint", 1]],
+      "ar": [["حماية المستهلك", 1], ["تقديم شكوى", 1], ["تثبيت تطبيق", 1], ["التحكم عن بعد", 1]]
+    },
+    "offers": {
+      "en": [["chalet", 2], ["booking fee", 2], ["deposit", 2], ["seized by abu dhabi customs", 2], ["discounted gold", 2], ["limited time", 1], ["today only", 1]],
+      "ar": [["عروض وهمية", 2], ["عربون", 2], ["مصادرة من جمارك ابوظبي", 2], ["شاليه", 1], ["ذهب بسعر مخفض", 1], ["ربحت", 1], ["جائزة", 1], ["عرض لفترة محدودة", 1], ["اليوم فقط", 1], ["اضغط على الرابط", 1], ["خلال 24 ساعة", 1]]
+    },
+    "jobs_investment": {
+      "en": [["work from home", 1], ["daily income", 1], ["guaranteed profit", 1], ["trading platform", 1], ["domestic worker", 2]],
+      "ar": [["فرصة عمل", 1], ["عمل من المنزل", 1], ["دخل يومي", 1], ["ارباح مضمونة", 1], ["عملات رقمية", 1], ["تداول", 1]]
+    }
+  },
+  "urgency": {
+    "en": ["urgent", "immediately", "within 24 hours", "today", "final", "suspended", "avoid"],
+    "ar": ["فورا", "عاجل", "خلال 24 ساعة", "اليوم", "تجنب"]
+  },
+  "url_lure_words": ["pay", "payment", "fine", "fines", "toll", "verify", "verification", "update", "secure", "login", "signin", "account", "refund", "parcel", "delivery", "track", "customs", "violation", "renew", "unlock", "confirm", "portal", "billing", "wallet", "otp", "reward", "points", "service", "support", "auth", "id"]
+}

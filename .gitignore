@@ -1,0 +1,15 @@
+.env
+*.env
+!.env.example
+reference/
+*.zip
+/*.pdf
+/Advanced URL fraud detection*.md
+/uae_landscape.md
+*.db
+*.db-journal
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+eval/cache/
