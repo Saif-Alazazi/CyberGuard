@@ -25,6 +25,13 @@ def _is_uae_lookalike(domain: str) -> list[dict]:
     return [h for h in lexical.brand_hits(domain.rsplit(".", 1)[0]) if h["scope"] == "uae"]
 
 
+def _prefilter():
+    """Cheap first pass: a domain is fully checked only if it contains the first 4 letters of a UAE brand token
+    (keeps typos such as salilk or dubaipoit) or is an internationalised (xn--) name."""
+    stems = {t[:4] for t, _, scope in data().tokens if scope == "uae" and len(t) >= 3}
+    return lambda dom: "xn--" in dom or any(s in dom for s in stems)
+
+
 def whoisds(days_back: int = 1) -> list[dict]:
     """Download yesterday's free WhoisDS NRD list and keep UAE brand look-alikes."""
     day = (datetime.now(timezone.utc) - timedelta(days=days_back)).strftime("%Y-%m-%d")
@@ -35,9 +42,10 @@ def whoisds(days_back: int = 1) -> list[dict]:
     with zipfile.ZipFile(io.BytesIO(r.content)) as z:
         names = z.read(z.namelist()[0]).decode("utf-8", "replace").split()
     hits = []
+    worth_checking = _prefilter()
     for dom in names:
         dom = dom.strip().lower()
-        b = _is_uae_lookalike(dom)
+        b = _is_uae_lookalike(dom) if worth_checking(dom) else []
         if b:
             hits.append({"domain": dom, "source": "nrd", "first_seen": f"{day}T00:00:00+00:00",
                          "detail": f"registered {day}; looks like {', '.join(sorted({x['brand'] for x in b}))} "
