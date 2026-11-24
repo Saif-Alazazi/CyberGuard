@@ -75,6 +75,9 @@ def _entities(r: dict) -> list[tuple[str, str]]:
         ents.append(("redirect_target", r["registrable"]))
     for h in r.get("hops", [])[:-1]:
         ents.append(("redirect_from", h["url"].split("/")[2] if h["url"].count("/") >= 2 else h["url"]))
+    tls = (r.get("intel") or {}).get("tls") or {}
+    if tls.get("sha256") and tls.get("san_count", 99) <= 10:  # big shared CDN certificates would link unrelated sites
+        ents.append(("cert", tls["sha256"]))
     ipi = (r.get("intel") or {}).get("ip") or {}
     if ipi.get("cloudflare_proxied") or (r.get("allowlist") or {}).get("hosting"):
         # Cloudflare anycast IPs and shared-hosting platforms (github.io, pages.dev...) serve millions of unrelated sites

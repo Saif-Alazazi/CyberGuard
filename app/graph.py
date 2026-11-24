@@ -1,12 +1,12 @@
-"""Layer 10: scam-network graph. Domains are linked through shared IPs, nameservers, favicon hashes, phone numbers,
-form POST targets and redirect hops (correlation idea adapted from FraudLand correlation/engine.py: shared
+"""Layer 10: scam-network graph. Domains are linked through shared TLS certificates, IPs, nameservers, favicon
+hashes, phone numbers, form POST targets and redirect hops (correlation idea adapted from FraudLand correlation/engine.py: shared
 infrastructure is an investigative lead, not proof)."""
 import networkx as nx
 
 from app import store
 
-KIND_LABEL = {"ip": "IP", "ns": "Nameserver", "favicon": "Favicon hash", "phone": "Phone", "post_target": "Form target",
-              "redirect_target": "Redirect target", "redirect_from": "Redirect via"}
+KIND_LABEL = {"cert": "TLS certificate", "ip": "IP", "ns": "Nameserver", "favicon": "Favicon hash", "phone": "Phone",
+              "post_target": "Form target", "redirect_target": "Redirect target", "redirect_from": "Redirect via"}
 
 
 def build() -> nx.Graph:

@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
 from app import config, store
-from app.data import data
+from app.data import data, split_host
 from app.pipeline import allowlist, domain_intel, extract, feeds, lexical, resolve
 from app.pipeline.netsafe import UnsafeURL, normalize
 from app.pipeline.score import finalize, reason
@@ -144,7 +144,8 @@ async def scan_url(url: str, mode: str = "fast", message: dict | None = None, so
         _timed(feeds.lookup(final_url, final_host, reg, check_host=not shared,
                             also_hosts=[(urlsplit(u).hostname or "").lower() for u in [url] + [h["url"] for h in hops]]),
                6, "threat feeds", skipped),
-        _timed(domain_intel.lookup(reg, first_ip), 7, "RDAP/WHOIS + IPinfo", skipped) if want_intel else asyncio.sleep(0),
+        _timed(domain_intel.lookup(reg, first_ip, final_host if final_url.startswith("https") else None), 7,
+               "RDAP/WHOIS + IPinfo + TLS", skipped) if want_intel else asyncio.sleep(0),
     )
     known_bad = False
     dns = {}
@@ -166,6 +167,12 @@ async def scan_url(url: str, mode: str = "fast", message: dict | None = None, so
                 reasons.append(reason("NEW_DOMAIN", str(age)))
             elif age < 180:
                 reasons.append(reason("RECENT_DOMAIN", str(age)))
+        tls = intel.get("tls") or {}
+        if tls and not trusted_final and tls.get("san_count", 0) <= 50:
+            others = [s.lstrip("*.") for s in tls.get("sans", []) if split_host(s.lstrip("*."))[3] != reg]
+            twins = [s for s in others if any(h["scope"] == "uae" for h in lexical.brand_hits(s.rsplit(".", 1)[0]))]
+            if twins:
+                reasons.append(reason("CERT_SIBLINGS", ", ".join(twins[:3])))
         ipi = intel.get("ip") or {}
         if ipi.get("kit_hosting") and not trusted_final:
             reasons.append(reason("KIT_HOSTING", f"{ipi['kit_hosting']} {ipi.get('asn')}"))

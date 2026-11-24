@@ -129,6 +129,7 @@ function renderResult(r) {
     [t("created"), who.created ? `${who.created.slice(0, 10)} (${intel.age_days} ${t("age")})` : (r.tier === "official" || r.allowlist?.hosting ? null : t("unknown"))],
     [t("ip"), ip.ip ? `${ip.ip} · ${ip.asn || ""} ${ip.as_name || ""} · ${ip.country || ""}${ip.cloudflare_proxied ? " · Cloudflare proxy" : ""}` : null],
     [t("ns"), (who.nameservers?.length ? who.nameservers : r.dns?.ns || []).join(", ")],
+    [t("tls"), intel.tls ? `${intel.tls.issuer || ""} · ${t("issued")} ${(intel.tls.issued_utc || "").slice(0, 10)} · ${intel.tls.sans.slice(0, 4).join(", ")}${intel.tls.san_count > 4 ? " …" : ""}` : null],
     [t("feeds"), r.feeds?.length ? r.feeds.map((f) => `${f.source} (${f.match})`).join("; ") : t("not_listed")],
   ]);
 

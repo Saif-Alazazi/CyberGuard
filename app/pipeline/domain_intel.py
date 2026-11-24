@@ -1,9 +1,13 @@
-"""Layer 5: domain age, registrar, abuse contacts (RDAP; port-43 WHOIS for .ae) and IP/ASN (IPinfo Lite)."""
+"""Layer 5: domain age, registrar, abuse contacts (RDAP; port-43 WHOIS for .ae), IP/ASN (IPinfo Lite) and the
+TLS certificate the site presents (issuer, issue date, other domains on the same certificate, SHA-256)."""
 import asyncio
 import re
 from datetime import datetime, timezone
 
 import httpx
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.x509.oid import NameOID
 
 from app import config
 
@@ -65,6 +69,27 @@ async def ipinfo(c: httpx.AsyncClient, ip: str) -> dict:
             "country": j.get("country_code")}
 
 
+async def tls_cert(host: str, ip: str) -> dict:
+    """Read the certificate the server presents (every HTTPS site must show one). Connects only to `ip`, which
+    the SSRF guard has already verified as public."""
+    _, writer = await asyncio.wait_for(asyncio.open_connection(ip, 443, ssl=config.NO_VERIFY_CTX, server_hostname=host), 5)
+    try:
+        der = writer.get_extra_info("ssl_object").getpeercert(binary_form=True)
+    finally:
+        writer.close()
+    cert = x509.load_der_x509_certificate(der)
+    try:
+        sans = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value.get_values_for_type(x509.DNSName)
+    except x509.ExtensionNotFound:
+        sans = []
+    org = cert.issuer.get_attributes_for_oid(NameOID.ORGANIZATION_NAME) or cert.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)
+    issued = cert.not_valid_before_utc
+    return {"issuer": org[0].value if org else None, "issued_utc": issued.isoformat(),
+            "expires_utc": cert.not_valid_after_utc.isoformat(), "issued_days_ago": (datetime.now(timezone.utc) - issued).days,
+            "san_count": len(sans), "sans": [s.lower() for s in sans[:30]], "self_signed": cert.issuer == cert.subject,
+            "sha256": cert.fingerprint(hashes.SHA256()).hex()}
+
+
 def age_days(created: str | None) -> int | None:
     if not created:
         return None
@@ -75,16 +100,21 @@ def age_days(created: str | None) -> int | None:
     return max(0, (datetime.now(timezone.utc) - dt).days)
 
 
-async def lookup(registrable: str, ip: str | None) -> dict:
-    out = {"whois": None, "ip": None, "age_days": None, "skipped": []}
+async def lookup(registrable: str, ip: str | None, host: str | None = None, want_whois: bool = True) -> dict:
+    out = {"whois": None, "ip": None, "tls": None, "age_days": None, "skipped": []}
+    labels = {"whois": "RDAP/WHOIS", "ip": "IPinfo", "tls": "TLS certificate"}
     async with httpx.AsyncClient(timeout=5, verify=config.SSL_CTX) as c:
-        tasks = {"whois": whois_ae(registrable) if registrable.endswith(".ae") else rdap(c, registrable)}
+        tasks = {}
+        if want_whois:
+            tasks["whois"] = whois_ae(registrable) if registrable.endswith(".ae") else rdap(c, registrable)
         if ip and config.IPINFO_TOKEN:
             tasks["ip"] = ipinfo(c, ip)
+        if ip and host:
+            tasks["tls"] = tls_cert(host, ip)
         res = dict(zip(tasks, await asyncio.gather(*tasks.values(), return_exceptions=True)))
     for k, v in res.items():
         if isinstance(v, Exception):
-            out["skipped"].append(f"{'RDAP/WHOIS' if k == 'whois' else 'IPinfo'}: {type(v).__name__}")
+            out["skipped"].append(f"{labels[k]}: {type(v).__name__}")
         else:
             out[k] = v
     if out["whois"] and not out["whois"].get("error"):

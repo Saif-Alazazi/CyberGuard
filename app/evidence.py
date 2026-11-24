@@ -193,6 +193,10 @@ def build_pdf(r: dict, screenshot: bytes | None) -> bytes:
                    ["Nameservers", wrap(", ".join(whois.get("nameservers") or (r.get("dns") or {}).get("ns") or []))],
                    ["IP / ASN / hosting", wrap(f"{ipi.get('ip', '-')} / {ipi.get('asn', '-')} {ipi.get('as_name', '')} / {ipi.get('country', '')}"
                                                f"{' (Cloudflare proxy - real host hidden)' if ipi.get('cloudflare_proxied') else ''}")],
+                   ["TLS certificate", wrap(f"{(intel.get('tls') or {}).get('issuer') or '-'}; issued "
+                                            f"{((intel.get('tls') or {}).get('issued_utc') or '-')[:10]}; covers "
+                                            f"{', '.join(((intel.get('tls') or {}).get('sans') or [])[:6]) or '-'}; SHA-256 "
+                                            f"{((intel.get('tls') or {}).get('sha256') or '-')[:32]}")],
                    ["Threat feeds", wrap("; ".join(f"{f['source']} ({f['match']})" for f in r.get("feeds", [])) or "no listing found (not proof of safety)")]]))
 
     page = r.get("page") or {}
