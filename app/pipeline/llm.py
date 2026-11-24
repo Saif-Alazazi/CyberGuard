@@ -60,8 +60,11 @@ async def brand_check(final_url: str, page: dict, gate: dict) -> dict | None:
     body = {"contents": [{"role": "user", "parts": contents}],
             "generationConfig": {"responseMimeType": "application/json", "responseSchema": SCHEMA, "temperature": 0}}
     async with httpx.AsyncClient(timeout=25, verify=config.SSL_CTX) as c:
-        r = await c.post(f"https://generativelanguage.googleapis.com/v1beta/models/{config.GEMINI_MODEL}:generateContent",
-                         headers={"x-goog-api-key": config.GEMINI_API_KEY}, json=body)
+        for model in dict.fromkeys([config.GEMINI_MODEL, config.GEMINI_FALLBACK_MODEL]):
+            r = await c.post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                             headers={"x-goog-api-key": config.GEMINI_API_KEY}, json=body)
+            if r.status_code not in (429, 503):
+                break
     r.raise_for_status()
     text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
     out = json.loads(text)
@@ -71,7 +74,7 @@ async def brand_check(final_url: str, page: dict, gate: dict) -> dict | None:
         out[k] = out.get(k) is True
     out["evidence_en"] = [str(x)[:200] for x in out.get("evidence_en", [])][:3]
     out["evidence_ar"] = [str(x)[:200] for x in out.get("evidence_ar", [])][:3]
-    out["model"] = config.GEMINI_MODEL
+    out["model"] = model
 
     # Code decides (PhishLLM rule): claimed brand's verified domains vs final domain, plus a sensitive request.
     d = data()

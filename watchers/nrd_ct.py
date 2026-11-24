@@ -2,6 +2,8 @@
 filtered for UAE brand look-alikes, before any victim reports them."""
 import base64
 import io
+import json
+import time
 import zipfile
 from datetime import datetime, timedelta, timezone
 
@@ -10,6 +12,7 @@ import httpx
 from app.data import data, split_host
 from app.pipeline import lexical
 
+MAX_CT_BYTES = 8_000_000
 CT_TOKENS = ["dubaipolice", "adpolice", "uaepass", "tamm", "salik", "darb", "mawaqif", "rtafine", "rta-dubai",
              "emiratespost", "emiratesnbd", "adcb", "icp-gov", "parkin", "qmobility", "etisalat", "mashreq"]
 
@@ -48,11 +51,21 @@ def crtsh(tokens: list[str] | None = None, max_age_days: int = 30) -> list[dict]
     hits: dict[str, dict] = {}
     with httpx.Client(timeout=40) as c:
         for tok in tokens or CT_TOKENS:
-            try:
-                r = c.get("https://crt.sh/", params={"q": f"%{tok}%", "output": "json", "exclude": "expired"})
-                rows = r.json() if r.status_code == 200 else []
-            except (httpx.HTTPError, ValueError):
-                continue
+            rows = []
+            for attempt in range(3):  # crt.sh often answers 502/503 under load
+                try:
+                    with c.stream("GET", "https://crt.sh/", params={"q": f"%{tok}%", "output": "json", "exclude": "expired"}) as r:
+                        if r.status_code == 200:
+                            body = b""
+                            for chunk in r.iter_bytes():
+                                body += chunk
+                                if len(body) > MAX_CT_BYTES:  # keep memory bounded on a 512 MB host
+                                    break
+                            rows = json.loads(body) if len(body) <= MAX_CT_BYTES else []
+                            break
+                except (httpx.HTTPError, ValueError):
+                    pass
+                time.sleep(3 * (attempt + 1))
             for row in rows:
                 nb = datetime.fromisoformat(row.get("not_before", "1970-01-01T00:00:00")).replace(tzinfo=timezone.utc)
                 if nb < since:

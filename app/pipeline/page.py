@@ -128,12 +128,20 @@ async def favicon_hash(page_url: str, icons: list[str]) -> int | None:
     return mmh3.hash(base64.encodebytes(r["body"]))
 
 
+LIGHT_CODES = {"CRED_FORM", "TG_EXFIL", "BRAND_MISMATCH_CRP", "PAGE_BRAND"}
+
+
 async def inspect(final_url: str, body: bytes, content_type: str, official: str | None, gate: dict,
-                  brands_claimed: list[str], intel: dict | None) -> dict:
+                  brands_claimed: list[str], intel: dict | None, light: bool = False) -> dict:
+    """Deep page checks. light=True (fast-mode grey zone): no screenshot or favicon fetch, and only strong
+    evidence counts - a sensitive form, Telegram exfiltration, or a brand claim together with a sensitive form."""
     d = data()
     skipped: list[str] = []
-    cf = await asyncio.gather(cloudflare_scan(final_url), return_exceptions=True)
-    cf = cf[0] if not isinstance(cf[0], Exception) else {"error": type(cf[0]).__name__}
+    if light:
+        cf = {}
+    else:
+        cf = await asyncio.gather(cloudflare_scan(final_url), return_exceptions=True)
+        cf = cf[0] if not isinstance(cf[0], Exception) else {"error": type(cf[0]).__name__}
     if cf.get("error"):
         skipped.append(f"Cloudflare screenshot: {cf['error']}")
     html = _decode(body, content_type) if body and "html" in (content_type or "html") else ""
@@ -185,7 +193,7 @@ async def inspect(final_url: str, body: bytes, content_type: str, official: str 
     official_numbers = {_digits(n) for n in d.helplines}
     unofficial = [n for n in dict.fromkeys(phones) if _digits(n) not in official_numbers]
 
-    fav = await favicon_hash(final_url, p.icons)
+    fav = None if light else await favicon_hash(final_url, p.icons)
     fav_brand = d.favicons.get(str(fav)) if fav is not None else None
 
     reasons = []
@@ -213,6 +221,9 @@ async def inspect(final_url: str, body: bytes, content_type: str, official: str 
         if (len(text) < 80 and not p.inputs or CAPTCHA_RE.search(html)) and (brands_claimed or young):
             reasons.append(reason("CLOAK", "CAPTCHA wall or near-empty page on a brand-keyword or days-old domain",
                                   detail_ar="صفحة تحقق CAPTCHA أو صفحة شبه فارغة على نطاق يحمل اسم علامة أو حديث التسجيل"))
+    if light:
+        reasons = [r for r in reasons if r["code"] in LIGHT_CODES and (r["code"] != "PAGE_BRAND" or fields)]
+        source = "fast-mode page check (no screenshot)"
     return {"reasons": reasons, "skipped": skipped, "screenshot": cf.get("screenshot"), "source": source,
             "title": title, "text_excerpt": text[:600], "sensitive_fields": sorted(fields), "post_targets": post_targets,
             "telegram_exfil": bool(tg), "favicon_mmh3": fav, "favicon_brand": fav_brand, "phones": list(dict.fromkeys(phones)),

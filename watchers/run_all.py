@@ -38,26 +38,39 @@ async def _scan_hits(hits: list[dict], limit: int = 40) -> list[dict]:
     return await asyncio.gather(*(one(h) for h in todo[:limit]))
 
 
-def run_watchers(with_serp: bool = False) -> list[dict]:
+async def run_watchers_async(with_serp: bool = False) -> list[dict]:
     hits: list[dict] = []
-    for name, fn in (("WhoisDS", nrd_ct.whoisds), ("crt.sh", nrd_ct.crtsh)):
+    sources = [("WhoisDS", nrd_ct.whoisds), ("crt.sh", nrd_ct.crtsh)] + ([("SerpApi", serp.probe)] if with_serp else [])
+    for name, fn in sources:
         try:
-            found = fn()
+            found = await asyncio.to_thread(fn)  # blocking HTTP clients run off the event loop
             log.info("%s: %d hits", name, len(found))
             hits += found
         except Exception as exc:  # one watcher failing must not stop the others
             log.warning("%s failed: %s", name, exc)
-    if with_serp:
-        try:
-            hits += serp.probe()
-        except Exception as exc:
-            log.warning("SerpApi failed: %s", exc)
-    scanned = asyncio.run(_scan_hits(hits))
+    scanned = await _scan_hits(hits)
     # Search results that merely mention a brand (blogs, guides) are kept only if the scan or phone check flags them.
     scanned = [w for w in scanned if w["source"] in ("nrd", "ct") or w.get("phones") or (w["score"] or 0) >= 25]
     for w in scanned:
         store.add_warning(w)
     return scanned
+
+
+def run_watchers(with_serp: bool = False) -> list[dict]:
+    return asyncio.run(run_watchers_async(with_serp))
+
+
+async def watch_forever(first_delay: float = 90, every_hours: float = 24) -> None:
+    """Server background loop: new-domain + certificate sweep shortly after start-up, then once a day.
+    SerpApi is left out (250 searches a month); it runs on demand via /api/watchers/run?serp=true."""
+    await asyncio.sleep(first_delay)
+    while True:
+        try:
+            found = await run_watchers_async(with_serp=False)
+            log.info("scheduled watcher sweep: %d early warnings", len(found))
+        except Exception as exc:
+            log.warning("scheduled watcher sweep failed: %s", exc)
+        await asyncio.sleep(every_hours * 3600)
 
 
 def main() -> None:

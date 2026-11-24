@@ -28,6 +28,17 @@ async def _timed(coro, seconds: float, label: str, skipped: list):
     return None
 
 
+async def _grey_zone_page(final_url: str, official, gate: dict, brands_claimed: list[str], intel) -> dict | None:
+    from app.pipeline import page as page_mod
+    from app.pipeline.netsafe import client, safe_get
+    async with client() as c:
+        r = await safe_get(c, final_url, read_body=True, max_bytes=600_000)
+    if r.get("status") != 200 or not r.get("body"):
+        return None
+    return await page_mod.inspect(final_url, r["body"], r.get("content_type", ""), official, gate, brands_claimed, intel,
+                                  light=True)
+
+
 async def scan_url(url: str, mode: str = "fast", message: dict | None = None, source: str = "user") -> dict:
     t0 = time.monotonic()
     d = data()
@@ -164,9 +175,17 @@ async def scan_url(url: str, mode: str = "fast", message: dict | None = None, so
         skipped.append(f"page capture: site not reachable ({chain['error']})")
 
     scored = finalize(reasons, bool(official) and not strong_lex, known_bad and not official)
+    # Fast-mode grey zone: one weak signal so far and the site is up -> a quick page look decides (no screenshot)
+    if (not deep and 10 <= scored["score"] < config.THRESHOLD and not chain["error"] and not trusted_final
+            and hops and hops[-1].get("status") == 200):
+        page = await _timed(_grey_zone_page(final_url, official, gate, brands_claimed, intel), 8, "grey-zone page check",
+                            skipped)
+        if page:
+            reasons += page["reasons"]
+            scored = finalize(reasons, bool(official) and not strong_lex, known_bad and not official)
     if deep and 25 <= scored["score"] <= 74 and page:
         from app.pipeline import llm as llm_mod
-        llm = await _timed(llm_mod.brand_check(final_url, page, gate), 25, "AI brand check", skipped)
+        llm = await _timed(llm_mod.brand_check(final_url, page, gate), 45, "AI brand check", skipped)
         if llm and llm.get("reasons"):
             reasons += llm["reasons"]
             scored = finalize(reasons, bool(official) and not strong_lex, known_bad and not official)

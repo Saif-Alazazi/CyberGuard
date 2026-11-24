@@ -22,7 +22,13 @@ STATIC = config.ROOT / "app" / "static"
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     store.init()
+    watcher = None
+    if config.WATCHERS_ENABLED:
+        from watchers.run_all import watch_forever
+        watcher = asyncio.create_task(watch_forever())
     yield
+    if watcher:
+        watcher.cancel()
 
 
 app = FastAPI(title="CyberGuard", version=config.VERSION, lifespan=lifespan,
@@ -166,6 +172,6 @@ def api_warnings():
 
 @app.post("/api/watchers/run", dependencies=[Depends(require_key)])
 async def api_watchers(background: BackgroundTasks, serp: bool = False):
-    from watchers.run_all import run_watchers
-    background.add_task(run_watchers, serp)
+    from watchers.run_all import run_watchers_async
+    background.add_task(run_watchers_async, serp)
     return {"status": "started", "note": "results appear in /api/early-warnings"}
