@@ -322,7 +322,9 @@
    "id": "trezor",
    "name_en": "Trezor",
    "tokens": [
-    "trezor"
+    "trezor",
+    "trezr",
+    "trazr"
    ],
    "domains": [
     "trezor.io"
@@ -714,6 +716,7 @@
    "id": "exodus",
    "name_en": "Exodus wallet",
    "tokens": [
+    "exodus",
     "exoduswallet"
    ],
    "domains": [
@@ -781,7 +784,8 @@
    "id": "robinhood",
    "name_en": "Robinhood",
    "tokens": [
-    "robinhood"
+    "robinhood",
+    "robnihod"
    ],
    "domains": [
     "robinhood.com"
@@ -936,6 +940,28 @@
    ],
    "domains": [
     "mobilelegends.com"
+   ]
+  },
+  {
+   "id": "telkomsel",
+   "name_en": "Telkomsel",
+   "tokens": [
+    "telkomsel"
+   ],
+   "domains": [
+    "telkomsel.com"
+   ]
+  },
+  {
+   "id": "spectrum",
+   "name_en": "Spectrum",
+   "tokens": [
+    "spectrum-login",
+    "spectrumnet"
+   ],
+   "domains": [
+    "spectrum.com",
+    "spectrum.net"
    ]
   }
  ]

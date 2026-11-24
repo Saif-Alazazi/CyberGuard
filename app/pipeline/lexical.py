@@ -1,4 +1,5 @@
 """Layer 4: lexical and lookalike signals on a hostname (English + Arabic, Unicode confusables, punycode)."""
+import base64
 import math
 import re
 import unicodedata
@@ -48,11 +49,13 @@ PLATFORM_OWNER = {"blogspot.com": "google", "appspot.com": "google", "web.app": 
                   "amplifyapp.com": "amazon", "cloudfront.net": "amazon", "s3.amazonaws.com": "amazon"}
 TENANT_LURES = ("support", "service", "help", "secure", "verify", "wallet", "mail", "claim", "bonus", "reward", "gift",
                 "prize", "promo", "billing", "invoice", "refund", "auth", "login", "signin", "account", "update", "connect",
-                "recovery", "unlock", "airdrop", "hadiah", "resmi")
+                "recovery", "unlock", "airdrop", "hadiah", "resmi", "undian", "password", "dashboard", "verification")
 
 
 def auto_generated(label: str) -> bool:
     """Machine-generated tenant names typical of phishing kits on free hosting (e.g. k1xmn-tu9-izyg-iovhz-27-10-2026-aa)."""
+    if re.fullmatch(r"[a-z]+-[a-z]+-[0-9a-f]{4}", label):
+        return True  # Cloudflare Workers / Pages default name (adjective-noun-hex), e.g. little-lake-b25e
     flat = re.sub(r"[^a-z0-9]", "", label)
     if len(flat) < 8:
         return False
@@ -60,6 +63,19 @@ def auto_generated(label: str) -> bool:
     chunks = [c for c in re.split(r"[-_.]", label) if c]
     junk = [c for c in chunks if (re.search(r"\d", c) and re.search(r"[a-z]", c)) or (len(c) >= 4 and not re.search(r"[aeiouy]", c))]
     return digits >= 4 or len(junk) >= 2 or (len(flat) >= 16 and _entropy(flat) > 3.9)
+
+
+def _email_in_query(query: str) -> bool:
+    if re.search(r"[\w.+-]+@[\w-]+\.[a-z]{2,}", query, re.I):
+        return True
+    for tok in re.findall(r"[A-Za-z0-9+/=_-]{16,}", query)[:5]:
+        try:
+            dec = base64.b64decode(tok + "=" * (-len(tok) % 4), altchars=b"-_").decode("ascii")
+        except (ValueError, UnicodeDecodeError):
+            continue
+        if re.fullmatch(r"[\w.+-]+@[\w-]+\.[\w.]+", dec):
+            return True
+    return False
 
 
 def brand_hits(text: str, loose: bool = False) -> list[dict]:
@@ -166,7 +182,7 @@ def analyse(url: str, host: str) -> list[dict]:
             sigs.append({"code": "RANDOM_TENANT", "detail": f"{tenant}.{hosting}"})
         lures = [w for w in TENANT_LURES if w in tenant]
         if lures:
-            sigs.append({"code": "LURE_IN_HOST", "detail": ", ".join(lures[:3])})
+            sigs.append({"code": "LURE_IN_HOST", "detail": ", ".join(lures[:3]), "weight": 15})
         path = unquote(urlsplit(url).path).lower()
         for h in brand_hits(path):
             if not any(s.get("brand") == h["brand"] for s in sigs):
@@ -182,12 +198,16 @@ def analyse(url: str, host: str) -> list[dict]:
     if path_words:
         sigs.append({"code": "LURE_IN_PATH", "detail": ", ".join(path_words[:3])})
     frag = unquote(unquote(urlsplit(url).fragment)).lower()
+    query = unquote(unquote(urlsplit(url).query))
     if re.search(r"[\w.+-]+@[\w-]+\.[\w.]+|^-?e-?mail-?$", frag):
-        sigs.append({"code": "EMAIL_IN_URL", "detail": "victim e-mail address pre-filled in the link fragment"})
+        sigs.append({"code": "EMAIL_IN_URL", "detail": "e-mail address pre-filled in the link fragment"})
+    elif _email_in_query(query):
+        sigs.append({"code": "EMAIL_IN_URL", "detail": "e-mail address (plain or base64) carried in the link", "weight": 10})
     if dom.count("-") >= 2 or len(sub.split(".")) >= 3:
         sigs.append({"code": "COMPLEX_HOST", "detail": host})
     core = re.sub(r"[^a-z]", "", dom)
-    if not hosting and len(dom) >= 8 and (auto_generated(dom) or not re.search(r"[aeiou]", core)):
+    if not hosting and ((len(dom) >= 8 and (auto_generated(dom) or not re.search(r"[aeiou]", core)))
+                        or re.fullmatch(r"[a-z]{1,4}\d{2,}|\d{4,}", dom)):
         sigs.append({"code": "RANDOM_LABEL", "detail": dom})
     if re.fullmatch(r"\d+\.\d+\.\d+\.\d+", host):
         sigs.append({"code": "IP_HOST", "detail": host})

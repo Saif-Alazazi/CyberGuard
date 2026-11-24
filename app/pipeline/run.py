@@ -173,8 +173,10 @@ async def scan_url(url: str, mode: str = "fast", message: dict | None = None, so
     elif deep and not config.GEMINI_API_KEY:
         skipped.append("AI brand check: no API key configured")
 
-    infra = store.infra_links(final_host if gate["hosting"] else reg, first_ip, dns.get("ns", []), page)
-    if infra and not official:
+    ipi = (intel or {}).get("ip") or {}
+    infra = store.infra_links(final_host if gate["hosting"] else reg, first_ip, dns.get("ns", []), page,
+                              shared_host=bool(gate["hosting"] or gate["shortener"] or ipi.get("cloudflare_proxied")))
+    if infra and not official and not gate["tranco_rank"]:
         reasons.append(reason("INFRA_LINK", infra))
         scored = finalize(reasons, bool(official) and not strong_lex, known_bad and not official)
 

@@ -70,8 +70,9 @@ def _entities(r: dict) -> list[tuple[str, str]]:
     for h in r.get("hops", [])[:-1]:
         ents.append(("redirect_from", h["url"].split("/")[2] if h["url"].count("/") >= 2 else h["url"]))
     ipi = (r.get("intel") or {}).get("ip") or {}
-    if ipi.get("cloudflare_proxied"):
-        ents[:] = [e for e in ents if e[0] != "ip"]  # Cloudflare anycast IPs are shared by millions of sites
+    if ipi.get("cloudflare_proxied") or (r.get("allowlist") or {}).get("hosting"):
+        # Cloudflare anycast IPs and shared-hosting platforms (github.io, pages.dev...) serve millions of unrelated sites
+        ents[:] = [e for e in ents if e[0] not in ("ip", "ns")]
     return list(dict.fromkeys(ents))
 
 
@@ -111,10 +112,10 @@ def recent(limit: int = 50) -> list[dict]:
     return [dict(r) for r in rows]
 
 
-def infra_links(registrable: str, ip: str | None, ns: list[str], page: dict | None) -> str:
+def infra_links(registrable: str, ip: str | None, ns: list[str], page: dict | None, shared_host: bool = False) -> str:
     """Return a description of shared infrastructure with a domain previously scored as fraud."""
-    probes = [("ns", n) for n in ns if not any(c in n for c in COMMON_NS)]
-    if ip:
+    probes = [] if shared_host else [("ns", n) for n in ns if not any(c in n for c in COMMON_NS)]
+    if ip and not shared_host:
         probes.append(("ip", ip))
     if page:
         if page.get("favicon_mmh3"):

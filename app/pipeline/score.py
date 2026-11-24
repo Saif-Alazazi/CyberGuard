@@ -32,7 +32,7 @@ REASONS: dict[str, tuple[int, str, str]] = {
     "LURE_TEXT": (10, "Message uses known UAE scam wording: {d}.", "الرسالة تستخدم عبارات احتيال معروفة في الإمارات: {d}."),
     "SENDER_ANOMALY": (10, "Claims to be official but sent from {d}.", "تدّعي أنها رسمية لكنها مرسلة من {d}."),
     "LURE_IN_HOST": (10, "Domain contains login/payment bait words ({d}).", "النطاق يحتوي على كلمات استدراج للدخول أو الدفع ({d})."),
-    "FREE_HOSTING": (10, "Hosted on a free hosting platform ({d}).", "مستضاف على منصة استضافة مجانية ({d})."),
+    "FREE_HOSTING": (15, "Hosted on a free hosting platform ({d}).", "مستضاف على منصة استضافة مجانية ({d})."),
     "UAE_KEYWORD": (10, "UAE keyword used as bait in an untrusted domain ({d}).", "كلمة إماراتية مستخدمة كطُعم في نطاق غير موثوق ({d})."),
     "LURE_IN_PATH": (5, "Link path contains login/payment bait words ({d}).", "مسار الرابط يحتوي على كلمات استدراج ({d})."),
     "RANDOM_LABEL": (10, "Random-looking domain name ({d}).", "اسم نطاق عشوائي المظهر ({d})."),
