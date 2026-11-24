@@ -1,6 +1,7 @@
 """Layer 3: known-bad lookups and plain DNS.
 
-Live per-link: OpenPhish (current feed), URLhaus, ThreatFox (abuse.ch), Cloudflare 1.1.1.2 filtering DNS.
+Live per-link: Google Safe Browsing (if a key is set), OpenPhish (current feed), URLhaus, ThreatFox (abuse.ch),
+Cloudflare 1.1.1.2 filtering DNS.
 Bulk domain lists, refreshed every 6 h: Phishing.Database (active phishing domains), Phishing Army, phishunt.io
 (last 24 h) and PhishDestroy DestroyList (DNS-verified active domains).
 A listed domain never overrides the official / popular / shared-hosting protections.
@@ -110,6 +111,16 @@ async def lookup(url: str, host: str, registrable: str, check_host: bool, also_h
             tasks["cf_filter"] = doh(c, "https://security.cloudflare-dns.com/dns-query", host)
             tasks["openphish"] = _openphish()
             tasks["bulk"] = load_bulk()
+            if config.SAFE_BROWSING_KEY:
+                entries = list(dict.fromkeys([url] + [f"http://{h}/" for h in [host, *(also_hosts or [])] if h]))[:10]
+                tasks["safebrowsing"] = c.post(
+                    "https://safebrowsing.googleapis.com/v4/threatMatches:find",
+                    headers={"X-Goog-Api-Key": config.SAFE_BROWSING_KEY},
+                    json={"client": {"clientId": "cyberguard", "clientVersion": config.VERSION},
+                          "threatInfo": {"threatTypes": ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE",
+                                                         "POTENTIALLY_HARMFUL_APPLICATION"],
+                                         "platformTypes": ["ANY_PLATFORM"], "threatEntryTypes": ["URL"],
+                                         "threatEntries": [{"url": e} for e in entries]}})
             if config.URLHAUS_AUTH_KEY:
                 hdr = {"Auth-Key": config.URLHAUS_AUTH_KEY}
                 if check_host:
@@ -140,6 +151,13 @@ async def lookup(url: str, host: str, registrable: str, check_host: bool, also_h
             m = next((c for c in cands if c in s), None)
             if m:
                 hits.append({"source": name, "match": "domain" if m == host else f"domain in redirect chain {m}"})
+    sb = results.get("safebrowsing")
+    if isinstance(sb, httpx.Response):
+        if sb.status_code == 200 and sb.json().get("matches"):
+            kinds = sorted({m.get("threatType", "") for m in sb.json()["matches"]})
+            hits.append({"source": "Google Safe Browsing", "match": ", ".join(kinds).lower()})
+        elif sb.status_code != 200:
+            skipped.append(f"Google Safe Browsing: HTTP {sb.status_code}")
     tf = results.get("threatfox")
     if isinstance(tf, httpx.Response) and tf.status_code == 200:
         j = tf.json()

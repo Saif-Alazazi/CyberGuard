@@ -90,7 +90,8 @@ def health():
     from watchers.run_all import SWEEP_STATUS
     return {"status": "ok", "version": config.VERSION, "feeds_enabled": config.FEEDS_ENABLED, "watcher_sweep": SWEEP_STATUS,
             "ai_configured": bool(config.GEMINI_API_KEY),
-            "screenshot_configured": bool(config.CLOUDFLARE_ACCOUNT_ID and config.CLOUDFLARE_API_TOKEN)}
+            "screenshot_configured": bool(config.CLOUDFLARE_ACCOUNT_ID and config.CLOUDFLARE_API_TOKEN),
+            "safe_browsing_configured": bool(config.SAFE_BROWSING_KEY)}
 
 
 @app.post("/api/scan")

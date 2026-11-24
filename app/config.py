@@ -22,6 +22,7 @@ CLOUDFLARE_API_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "")
 URLHAUS_AUTH_KEY = os.environ.get("URLHAUS_AUTH_KEY", "")
 IPINFO_TOKEN = os.environ.get("IPINFO_TOKEN", "")
 SERPAPI_KEY = os.environ.get("SERPAPI_KEY", "")
+SAFE_BROWSING_KEY = os.environ.get("GOOGLE_SAFE_BROWSING_KEY", "")
 API_KEY = os.environ.get("CYBERGUARD_API_KEY", "")
 # Signs Safe Links (/go). Set a fixed value in production so issued links survive restarts.
 LINK_SECRET = os.environ.get("CYBERGUARD_LINK_SECRET") or secrets.token_hex(32)
