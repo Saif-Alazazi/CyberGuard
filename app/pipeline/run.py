@@ -93,7 +93,8 @@ async def scan_url(url: str, mode: str = "fast", message: dict | None = None, so
             if s["code"] == "FREE_HOST_BRAND":
                 w -= 5
             b = d.brand(s["brand"])
-            reasons.append(reason(s["code"], f"{b['name_en']}: {s['detail']}", w))
+            how = ("" if s.get("how", "exact") == "exact" else f" ({s['how']})") + (f" - {s['hosting']}" if s.get("hosting") else "")
+            reasons.append(reason(s["code"], b["name_en"] + how, w, b.get("name_ar", b["name_en"]) + how))
             brands_claimed.append(s["brand"])
         else:
             reasons.append(reason(s["code"], s["detail"]))
@@ -110,8 +111,8 @@ async def scan_url(url: str, mode: str = "fast", message: dict | None = None, so
         if uae_claims and message["sender_flags"]:
             reasons.append(reason("SENDER_ANOMALY", "; ".join(message["sender_flags"])))
         if uae_claims and not official and not gate["tranco_rank"]:
-            names = ", ".join(d.brands[c]["name_en"] for c in uae_claims[:2])
-            reasons.append(reason("TEXT_BRAND_MISMATCH", names))
+            reasons.append(reason("TEXT_BRAND_MISMATCH", ", ".join(d.brands[c]["name_en"] for c in uae_claims[:2]),
+                                  detail_ar="، ".join(d.brands[c]["name_ar"] for c in uae_claims[:2])))
             brands_claimed += uae_claims
 
     # Layers 3 + 5 - feeds and domain intel, concurrently
@@ -205,5 +206,9 @@ async def scan_input(text: str, mode: str = "fast", sender: str = "") -> dict:
     message = None if single else extract.analyse_message(text, sender)
     if single and sender:
         message = extract.analyse_message("", sender)
+    if message:
+        d = data()
+        message["claimed_names"] = [{"id": c, "en": d.brand(c)["name_en"], "ar": d.brand(c).get("name_ar", d.brand(c)["name_en"])}
+                                    for c in message["claimed_brands"] if d.brand(c)]
     results = await asyncio.gather(*(scan_url(u, mode, message) for u in urls[:5]))
     return {"input_type": "url" if single else "message", "urls_found": urls, "message": message, "results": list(results)}

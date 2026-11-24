@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CyberGuard</title>
+<meta name="description" content="CyberGuard checks UAE scam links: risk score, bilingual reasons and police-ready evidence.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/static/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2l12 5v8c0 7.5-5.1 13.4-12 15-6.9-1.6-12-7.5-12-15V7z' fill='%230b3d5c'/%3E%3Cpath d='M11 16l4 4 7-8' stroke='%23fff' stroke-width='3' fill='none'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2l12 5v8c0 7.5-5.1 13.4-12 15-6.9-1.6-12-7.5-12-15V7z" fill="currentColor"/><path d="M11 16l4 4 7-8" stroke="#0b3d5c" stroke-width="3" fill="none"/></svg>
+      <div><b>CyberGuard</b><span data-i18n="tagline"></span></div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="scan" data-i18n="tab_scan"></button>
+      <button class="tab" data-tab="batch" data-i18n="tab_batch"></button>
+      <button class="tab" data-tab="warnings" data-i18n="tab_warnings"></button>
+      <button class="tab" data-tab="graph" data-i18n="tab_graph"></button>
+    </nav>
+    <button id="lang" class="lang" aria-label="Switch language">عربي</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="tab-scan" class="panel active">
+    <div class="card scan-card">
+      <h1 data-i18n="scan_title"></h1>
+      <p class="muted" data-i18n="scan_sub"></p>
+      <textarea id="input" rows="4" data-i18n-ph="scan_ph"></textarea>
+      <div class="row">
+        <input id="sender" data-i18n-ph="sender_ph">
+        <div class="seg" role="radiogroup">
+          <label><input type="radio" name="mode" value="fast" checked><span data-i18n="mode_fast"></span></label>
+          <label><input type="radio" name="mode" value="deep"><span data-i18n="mode_deep"></span></label>
+        </div>
+        <button id="go" class="primary" data-i18n="scan_btn"></button>
+      </div>
+      <div class="demos"><span class="muted" data-i18n="demos"></span><div id="demo-list"></div></div>
+    </div>
+    <div id="status" class="status" hidden></div>
+    <div id="results"></div>
+  </section>
+
+  <section id="tab-batch" class="panel">
+    <div class="card">
+      <h2 data-i18n="batch_title"></h2>
+      <p class="muted" data-i18n="batch_sub"></p>
+      <div class="row"><input type="file" id="csv" accept=".csv,text/csv"><button id="batch-go" class="primary" data-i18n="batch_btn"></button></div>
+      <div id="batch-status" class="muted"></div>
+      <div id="batch-table"></div>
+    </div>
+  </section>
+
+  <section id="tab-warnings" class="panel">
+    <div class="card">
+      <h2 data-i18n="warn_title"></h2>
+      <p class="muted" data-i18n="warn_sub"></p>
+      <div id="warn-table"></div>
+    </div>
+  </section>
+
+  <section id="tab-graph" class="panel">
+    <div class="card">
+      <h2 data-i18n="graph_title"></h2>
+      <p class="muted" data-i18n="graph_sub"></p>
+      <div id="graph"></div>
+      <div id="campaigns"></div>
+    </div>
+  </section>
+</main>
+<footer class="wrap foot muted" data-i18n="footer"></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"></script>
+<script src="/static/i18n.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

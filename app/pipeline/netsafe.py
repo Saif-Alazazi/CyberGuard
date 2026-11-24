@@ -4,10 +4,11 @@ Adapted from the FraudLand prototype (domain/urls.py normalize + IP-pinned fetch
 ports 80/443, no local hostnames, every resolved address must be public, and the peer address of the
 actual TCP connection is re-checked before any body byte is read (defeats DNS rebinding).
 """
-import asyncio
 import ipaddress
-import socket
 from urllib.parse import urlsplit, urlunsplit
+
+import dns.asyncresolver
+import dns.exception
 
 import httpx
 
@@ -52,17 +53,35 @@ def normalize(raw: str) -> tuple[str, str]:
 
 
 async def resolve_public(host: str) -> list[str]:
-    """Resolve host; raise UnsafeURL if any address is not public. Returns [] on NXDOMAIN."""
-    loop = asyncio.get_running_loop()
+    """Resolve host (async, no thread pool); raise UnsafeURL if any address is not public. [] on NXDOMAIN/no answer."""
     try:
-        infos = await asyncio.wait_for(loop.getaddrinfo(host, 443, type=socket.SOCK_STREAM), 4)
-    except (socket.gaierror, asyncio.TimeoutError, UnicodeError):
-        return []
-    ips = list(dict.fromkeys(i[4][0] for i in infos))
+        ips = [str(ipaddress.ip_address(host.strip("[]")))]
+    except ValueError:
+        ips = []
+    if not ips:
+        for rtype in ("A", "AAAA"):
+            try:
+                ans = await _resolver().resolve(host, rtype, lifetime=3)
+                ips += [r.to_text() for r in ans]
+            except (dns.exception.DNSException, UnicodeError, ValueError):
+                continue
+            if ips:
+                break
     for ip in ips:
         if not ipaddress.ip_address(ip).is_global:
             raise UnsafeURL(f"{host} resolves to non-public address")
     return ips
+
+
+_RES: dns.asyncresolver.Resolver | None = None
+
+
+def _resolver() -> dns.asyncresolver.Resolver:
+    global _RES
+    if _RES is None:
+        _RES = dns.asyncresolver.Resolver(configure=False)
+        _RES.nameservers = ["1.1.1.1", "8.8.8.8"]
+    return _RES
 
 
 def client() -> httpx.AsyncClient:

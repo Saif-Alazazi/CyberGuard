@@ -56,29 +56,34 @@ def brand_hits(text: str) -> list[dict]:
         if bid not in hits or hits[bid]["how"] != "exact":
             hits[bid] = {"brand": bid, "scope": scope, "how": how, "token": token}
 
+    def affix_ok(rest: str) -> bool:
+        return rest in lure_words or rest.isdigit()
+
+    def word_match(tok: str, ws: list[str]) -> bool:
+        if len(tok) >= 8 and tok in "".join(ws):
+            return True
+        pairs = ws + [a + b for a, b in zip(ws, ws[1:])]
+        for w in pairs:
+            if w == tok or (w.startswith(tok) and affix_ok(w[len(tok):])) or (w.endswith(tok) and affix_ok(w[: -len(tok)])):
+                return True
+        return False
+
     for tok, bid, scope in d.tokens:
-        if len(tok) >= 5:
-            if tok in joined:
-                add(bid, scope, "exact", tok)
-            elif any(tok in w for w in leet_words):
-                add(bid, scope, "leetspeak/confusable", tok)
-        else:
-            for w in words:
-                if w == tok or (w.startswith(tok) and w[len(tok):] in lure_words) or (w.endswith(tok) and w[: -len(tok)] in lure_words):
-                    add(bid, scope, "exact", tok)
-    # typosquats of long tokens (e.g. dubaipoliauey, dubaipoit, emiratsnbd)
+        if word_match(tok, words):
+            add(bid, scope, "exact", tok)
+        elif word_match(tok, leet_words):
+            add(bid, scope, "leetspeak/confusable", tok)
+    # typosquats of distinctive tokens (e.g. dubaipoit, emiratsnbd, uaepas)
     for tok, bid, scope in d.tokens:
-        if len(tok) < 6 or bid in hits:
+        if len(tok) < 6 or hits:
             continue
+        limit = 2 if len(tok) >= 9 else 1
         for w in leet_words:
-            if len(w) < 5 or abs(len(w) - len(tok)) > 4:
+            if len(w) < 5 or abs(len(w) - len(tok)) > limit or w[0] != tok[0]:
                 continue
             dist = Levenshtein.distance(w, tok)
-            if 0 < dist <= (1 if len(tok) < 8 else 2):
+            if 0 < dist <= limit:
                 add(bid, scope, f"typosquat ({w}~{tok})", tok)
-                break
-            if len(w) > len(tok) and Levenshtein.distance(w[: len(tok)], tok) <= 1 and w[:3] == tok[:3] and len(tok) >= 8:
-                add(bid, scope, f"typosquat prefix ({w}~{tok})", tok)
                 break
     # Arabic brand names inside an IDN label
     for name, bid in d.name_patterns:
@@ -117,7 +122,7 @@ def analyse(url: str, host: str) -> list[dict]:
             continue
         code = "FREE_HOST_BRAND" if hosting else "BRAND_IN_HOST"
         sigs.append({"code": code, "detail": f"{h['token']} ({h['how']})" + (f" on {hosting}" if hosting else ""),
-                     "brand": h["brand"], "scope": h["scope"]})
+                     "brand": h["brand"], "scope": h["scope"], "how": h["how"], "hosting": hosting})
 
     labels = (sub.split(".") if sub else []) + [dom]
     if any(l in _TRICK_LABELS for l in labels[:-1]) or re.match(r"^(com|gov|ae|gov-ae)-", dom):

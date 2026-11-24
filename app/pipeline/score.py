@@ -53,10 +53,10 @@ TIER_TEXT = {
 }
 
 
-def reason(code: str, detail: str = "", weight: int | None = None) -> dict:
+def reason(code: str, detail: str = "", weight: int | None = None, detail_ar: str | None = None) -> dict:
     w, en, ar = REASONS[code]
     return {"code": code, "weight": w if weight is None else weight, "detail": detail,
-            "en": en.format(d=detail), "ar": ar.format(d=detail)}
+            "en": en.format(d=detail), "ar": ar.format(d=detail if detail_ar is None else detail_ar)}
 
 
 def finalize(reasons: list[dict], official: bool, known_bad: bool) -> dict:

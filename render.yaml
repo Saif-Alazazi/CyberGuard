@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: cyberguard
+    runtime: python
+    plan: free
+    branch: master
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: CYBERGUARD_DB
+        value: /tmp/cyberguard.db
+      - key: GEMINI_MODEL
+        value: gemini-4-hydrogen
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: CLOUDFLARE_API_TOKEN
+        sync: false
+      - key: URLHAUS_AUTH_KEY
+        sync: false
+      - key: IPINFO_TOKEN
+        sync: false
+      - key: SERPAPI_KEY
+        sync: false
+      - key: CYBERGUARD_API_KEY
+        sync: false
