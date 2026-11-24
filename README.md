@@ -40,7 +40,6 @@ CyberGuard is an ordered funnel. Cheap, deterministic layers decide most links. 
 | 9 | Evidence pack | PDF (English + Arabic), JSON and STIX 2.1. Includes original and final URL, redirect chain, screenshot, WHOIS / registrar abuse contact, IP / ASN, UTC + GST timestamps, SHA-256 hashes, the impersonated brand and its official domain, and suggested actions (Aman 800 2626, registrar / Cloudflare abuse, CERT sharing). |
 | 10 | Scam network | A networkx graph links domains through shared IP, nameserver, favicon, phone number, form target or redirect. Common infrastructure (Cloudflare anycast, big DNS hosts) is excluded. A new link to a known scam node adds `INFRA_LINK`. |
 | W | Watchers | WhoisDS newly registered domains + crt.sh certificates filtered for UAE look-alikes, and a bilingual SerpApi pack for Google search, ads and Maps (fake helplines). Every hit is auto-scanned and shown in **Early warnings** with first-seen time and blocklist status. The server runs the new-domain + certificate sweep automatically 90 s after start-up and then every 24 h; the SerpApi probe runs on demand (`POST /api/watchers/run?serp=true`) to respect its quota. |
-
 | S | Safe Links | Click-time protection. A sender (telecom SMS gateway, bank notification system, messaging bot) rewrites every link through `/go?u=…&s=…`, signed with an HMAC server secret (`POST /api/protect`). When someone taps it, CyberGuard scans the link at that moment: a signed link that is not flagged redirects instantly; a flagged link shows a bilingual warning page with the score, reasons, the real official site, a pre-filled report to Aman and the evidence PDF. Unsigned links are never auto-redirected, so the gateway cannot be abused as an open redirect. |
 
 **Fast mode** (layers 0-5 + score) is about 1 s median per URL and is the default for batch and CLI. When a fast scan lands in the grey zone (score 10-24) and the site is online, CyberGuard takes a quick look at the page without a screenshot; only strong evidence counts there (a password / OTP / card / Emirates ID form, a brand claim together with such a form, or Telegram exfiltration). **Deep mode** adds layers 6-7 (up to ~45 s, mostly waiting for the Cloudflare scan).
@@ -66,6 +65,8 @@ flowchart LR
     S --> EV[9 Evidence: PDF / JSON / STIX 2.1]
     S --> NET[10 Scam-network graph]
     W[Watchers: WhoisDS, crt.sh,<br/>SerpApi search / ads / Maps] --> C
+    SL[Safe Links: someone taps<br/>a protected SMS link] --> C
+    S --> WARN[Click blocked: bilingual<br/>warning + Aman report]
 ```
 
 ## Evaluation (measured)
@@ -146,7 +147,7 @@ The free instance sleeps after 15 minutes idle, so the first request after sleep
 | GET | `/go?u=<url>&s=<sig>` | click-time check: redirect if signed and not flagged, otherwise the bilingual warning page |
 | GET | `/api/graph` | scam-network nodes, edges and campaigns |
 | GET | `/api/early-warnings` | watcher hits |
-| GET | `/health` | liveness + which optional layers are configured |
+| GET | `/health` | liveness, which optional layers are configured, and the last automatic watcher sweep |
 
 ## Tools, APIs and data
 

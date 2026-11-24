@@ -49,9 +49,12 @@ def crtsh(tokens: list[str] | None = None, max_age_days: int = 30) -> list[dict]
     """Search CT logs for recent certificates naming UAE brand tokens outside official domains."""
     since = datetime.now(timezone.utc) - timedelta(days=max_age_days)
     hits: dict[str, dict] = {}
+    failures = 0
     with httpx.Client(timeout=40) as c:
         for tok in tokens or CT_TOKENS:
-            rows = []
+            if failures >= 2:
+                break  # crt.sh is down: keep what was found instead of retrying every token
+            rows = None
             for attempt in range(3):  # crt.sh often answers 502/503 under load
                 try:
                     with c.stream("GET", "https://crt.sh/", params={"q": f"%{tok}%", "output": "json", "exclude": "expired"}) as r:
@@ -66,7 +69,8 @@ def crtsh(tokens: list[str] | None = None, max_age_days: int = 30) -> list[dict]
                 except (httpx.HTTPError, ValueError):
                     pass
                 time.sleep(3 * (attempt + 1))
-            for row in rows:
+            failures = failures + 1 if rows is None else 0
+            for row in rows or []:
                 nb = datetime.fromisoformat(row.get("not_before", "1970-01-01T00:00:00")).replace(tzinfo=timezone.utc)
                 if nb < since:
                     continue

@@ -9,6 +9,7 @@ import asyncio
 import json
 import logging
 import sys
+from datetime import datetime, timezone
 
 from app import store
 from app.config import DATA_DIR
@@ -16,6 +17,7 @@ from app.pipeline.run import scan_url
 from watchers import nrd_ct, serp
 
 log = logging.getLogger("watchers")
+SWEEP_STATUS: dict = {"last_run_utc": None, "early_warnings": None, "error": None}
 
 
 async def _scan_hits(hits: list[dict], limit: int = 40) -> list[dict]:
@@ -67,9 +69,10 @@ async def watch_forever(first_delay: float = 90, every_hours: float = 24) -> Non
     while True:
         try:
             found = await run_watchers_async(with_serp=False)
-            log.info("scheduled watcher sweep: %d early warnings", len(found))
+            SWEEP_STATUS.update(early_warnings=len(found), error=None)
         except Exception as exc:
-            log.warning("scheduled watcher sweep failed: %s", exc)
+            SWEEP_STATUS.update(error=type(exc).__name__)
+        SWEEP_STATUS["last_run_utc"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
         await asyncio.sleep(every_hours * 3600)
 
 

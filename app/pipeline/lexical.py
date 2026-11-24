@@ -84,7 +84,6 @@ def brand_hits(text: str, loose: bool = False) -> list[dict]:
     lure_words = set(d.lures["url_lure_words"]) | {"uae", "ae", "dubai", "abudhabi", "gov", "online", "my", "e"}
     skel = skeleton(text)
     words = [w for w in re.split(r"[^a-z0-9؀-ۿ]+", skel) if w]
-    joined = "".join(words)
     leet_words = [w.translate(_LEET) for w in words]
     hits: dict[str, dict] = {}
 
