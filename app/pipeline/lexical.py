@@ -167,7 +167,8 @@ def analyse(url: str, host: str) -> list[dict]:
                      "brand": h["brand"], "scope": h["scope"], "how": h["how"], "hosting": hosting})
 
     labels = (sub.split(".") if sub else []) + [dom]
-    if any(l in _TRICK_LABELS for l in labels[:-1]) or re.match(r"^(com|gov|ae|gov-ae)-", dom):
+    ae_inside = any(l == "ae" and i > 0 and labels[i - 1] != "www" for i, l in enumerate(labels[:-1]))
+    if any(l in _TRICK_LABELS for l in labels[:-1]) or re.match(r"^(com|gov|ae|gov-ae)-", dom) or ae_inside:
         sigs.append({"code": "SUFFIX_TRICK", "detail": f"fake suffix pattern in {host}"})
 
     if tld in d.abused_tlds:
@@ -196,6 +197,15 @@ def analyse(url: str, host: str) -> list[dict]:
         sigs.append({"code": "LURE_IN_HOST", "detail": ", ".join(host_words[:3])})
     if path_words:
         sigs.append({"code": "LURE_IN_PATH", "detail": ", ".join(path_words[:3])})
+    raw_path = unquote(urlsplit(url).path).lower()
+    looks_like_kit = (any(w in raw_path for w in _LOGIN_WORDS + ("otp", "signon", "logon"))
+                      or re.search(r"/[a-z0-9-]+\.(?:com|net|org|pw|ae|io|info|co)(?:/|$)", raw_path))
+    if not hosting and looks_like_kit and not any(s["code"] in ("BRAND_IN_HOST", "FREE_HOST_BRAND") for s in sigs):
+        segs = [s for s in re.split(r"[/._-]+", unquote(urlsplit(url).path).lower()) if len(s) >= 5]
+        for h in brand_hits(" ".join(segs)):
+            if d.brand(h["brand"]) and reg not in d.brand(h["brand"]).get("domains", []) and len(h["token"]) >= 5:
+                sigs.append({"code": "BRAND_IN_PATH", "detail": f"{h['token']} in the page path of {host}", "brand": h["brand"]})
+                break
     frag = unquote(unquote(urlsplit(url).fragment)).lower()
     query = unquote(unquote(urlsplit(url).query))
     if re.search(r"[\w.+-]+@[\w-]+\.[\w.]+|^-?e-?mail-?$", frag):

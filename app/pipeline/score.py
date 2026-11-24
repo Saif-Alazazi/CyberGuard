@@ -20,6 +20,7 @@ REASONS: dict[str, tuple[int, str, str]] = {
     "FAKE_HELPLINE": (20, "Phone number on the page is not an official helpline: {d}.", "رقم الهاتف في الصفحة ليس رقماً رسمياً: {d}."),
     "TEXT_BRAND_MISMATCH": (20, "Message claims to be from {d} but the link is not an official domain.", "الرسالة تدّعي أنها من {d} لكن الرابط ليس نطاقاً رسمياً."),
     "MIXED_SCRIPT": (20, "Domain mixes alphabets to look like another name ({d}).", "النطاق يمزج بين حروف لغات مختلفة ليشبه اسماً آخر ({d})."),
+    "BRAND_IN_PATH": (15, "Brand name hidden in the link path on an unrelated site ({d}), typical of hacked sites hosting phishing.", "اسم علامة تجارية مخفي في مسار الرابط على موقع غير ذي صلة ({d})، وهو نمط شائع في المواقع المخترقة."),
     "EMAIL_IN_URL": (15, "Link carries the recipient's e-mail address ({d}), a credential-phishing pattern.", "الرابط يحمل البريد الإلكتروني للمستلم ({d})، وهو نمط تصيد لبيانات الدخول."),
     "IP_HOST": (15, "Link points to a raw IP address ({d}).", "الرابط يشير إلى عنوان IP مباشر ({d})."),
     "PAGE_BRAND": (15, "Page text names {d} on a non-official domain.", "نص الصفحة يذكر {d} على نطاق غير رسمي."),

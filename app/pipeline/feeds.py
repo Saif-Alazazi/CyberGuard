@@ -1,7 +1,8 @@
 """Layer 3: known-bad lookups and plain DNS.
 
 Live per-link: OpenPhish (current feed), URLhaus, ThreatFox (abuse.ch), Cloudflare 1.1.1.2 filtering DNS.
-Bulk domain lists, refreshed every 6 h: Phishing.Database (active phishing domains) and Phishing Army.
+Bulk domain lists, refreshed every 6 h: Phishing.Database (active phishing domains), Phishing Army, phishunt.io
+(last 24 h) and PhishDestroy DestroyList (DNS-verified active domains).
 A listed domain never overrides the official / popular / shared-hosting protections.
 """
 import asyncio
@@ -18,13 +19,15 @@ _lock = asyncio.Lock()
 BULK_LISTS = {
     "Phishing.Database": "https://raw.githubusercontent.com/Phishing-Database/Phishing.Database/master/phishing-domains-ACTIVE.txt",
     "Phishing Army": "https://phishing.army/download/phishing_army_blocklist_extended.txt",
+    "phishunt.io": "https://phishunt.io/blocklist/domains.txt",
+    "DestroyList": "https://cdn.jsdelivr.net/gh/phishdestroy/destroylist@main/dns/active_domains.txt",
 }
 _bulk = {"sets": {}, "loaded": 0.0, "sizes": {}}
 _bulk_lock = asyncio.Lock()
 
 
 async def load_bulk() -> dict:
-    """Download the bulk domain lists (every 6 h). Kept as frozensets: ~540k domains, roughly 60 MB of RAM."""
+    """Download the bulk domain lists (every 6 h). Kept as frozensets: ~680k domains, roughly 100 MB of RAM."""
     async with _bulk_lock:
         if time.time() - _bulk["loaded"] > 6 * 3600:
             async with httpx.AsyncClient(timeout=60, verify=config.SSL_CTX, follow_redirects=True) as c:

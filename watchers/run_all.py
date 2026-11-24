@@ -98,8 +98,9 @@ def main() -> None:
     if args.export:
         (DATA_DIR / "early_warnings_seed.json").write_text(
             json.dumps([{k: w.get(k) for k in ("domain", "source", "first_seen", "detail", "score", "tier", "blocklisted", "scan_id")}
-                        for w in scanned], ensure_ascii=False, indent=1), encoding="utf-8")
-        (DATA_DIR / "coverage_seed.json").write_text(json.dumps(store.coverage(), indent=1), encoding="utf-8")
+                        for w in scanned], ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
+        (DATA_DIR / "coverage_seed.json").write_text(json.dumps(store.coverage(), indent=1) + "\n", encoding="utf-8",
+                                                     newline="\n")
         # merge into the seed (it also holds campaign scans for the graph); newest scan per registrable domain wins
         seed_path = DATA_DIR / "seed_scans.jsonl"
         seeds = {}
@@ -113,7 +114,7 @@ def main() -> None:
                 s = store.get_scan(w["scan_id"])
                 seeds[s.get("registrable") or s["id"]] = s
         seed_path.write_text("".join(json.dumps(s, ensure_ascii=False, default=str) + "\n" for s in seeds.values()),
-                             encoding="utf-8")
+                             encoding="utf-8", newline="\n")
 
 
 if __name__ == "__main__":

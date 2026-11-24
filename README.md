@@ -31,7 +31,7 @@ CyberGuard is an ordered funnel. Cheap, deterministic layers decide most links. 
 | 0 | Ingest | Extracts links from pasted text, including defanged (`hxxp`, `[.]`), full-width and Arabic-Indic forms. Applies an English/Arabic UAE lure lexicon and flags sender anomalies (for example a "government" SMS from +63 / +1). |
 | 1 | Unroll | Follows redirects hop by hop (3xx, meta refresh, JS `location`), up to 10 hops, with an **SSRF guard on every hop**: public IPs only, peer IP re-checked after connect, ports 80/443, size and time limits. |
 | 2 | Allowlist gate | Takes the eTLD+1 (Public Suffix List) of the **final** URL and compares it with 47 verified UAE entities, including legacy domains (e.g. `darb.itc.gov.ae` → `qmobility.ae`, `etisalat.ae` → `eand.ae`), plus the Tranco top-10k. Shorteners and free hosting platforms are never allowlisted. Unlisted `.gov.ae` domains are flagged for verification. Phone numbers injected into official-site queries are detected. |
-| 3 | Threat feeds | OpenPhish, URLhaus, and the Cloudflare 1.1.1.2 malware/phishing DNS filter. |
+| 3 | Threat feeds | Per link: OpenPhish, URLhaus, ThreatFox and the Cloudflare 1.1.1.2 malware/phishing DNS filter. Bulk domain lists refreshed every 6 h: Phishing.Database, Phishing Army, phishunt.io and PhishDestroy DestroyList (~680k domains). A listed domain never overrides the official / popular / shared-hosting protections. |
 | 4 | Look-alikes | UAE and global brand tokens, typosquats, leetspeak, Unicode TR39 confusables including Arabic-Indic digits, punycode / mixed scripts, Arabic brand names in IDNs, the `brand.gov.ae-xxx.top` / `com-` suffix trick, the `brand@real-host` userinfo trick, abused TLDs, brands and machine-generated names on free hosting, and e-mail-in-fragment. |
 | 5 | Domain intel | RDAP age, registrar and abuse contact; port-43 WHOIS for `.ae`; IPinfo ASN / country; Cloudflare-proxy detection (so takedowns go to the right party); phishing-kit hosting ASNs. |
 | 6 | Page capture (deep) | Cloudflare URL Scanner mobile screenshot + DOM, plus a direct mobile-UA fetch. Detects password / OTP / card / Emirates ID fields, Telegram-bot exfiltration, favicon hash, phone numbers vs the official helpline registry, brand names in page text, cloaking (CAPTCHA wall or empty page on a young brand domain), and the Cloudflare verdict. |
@@ -39,7 +39,7 @@ CyberGuard is an ordered funnel. Cheap, deterministic layers decide most links. 
 | 8 | Score | Weighted reason codes give a 0-100 score. Overrides: an official domain is capped at 10; a known-bad hit scores at least 90. Tiers follow Scameter's colours. Every reason has English and Arabic text. |
 | 9 | Evidence pack | PDF (English + Arabic), JSON and STIX 2.1. Includes original and final URL, redirect chain, screenshot, WHOIS / registrar abuse contact, IP / ASN, UTC + GST timestamps, SHA-256 hashes, the impersonated brand and its official domain, and suggested actions (Aman 800 2626, registrar / Cloudflare abuse, CERT sharing). |
 | 10 | Scam network | A networkx graph links domains through shared IP, nameserver, favicon, phone number, form target or redirect. Common infrastructure (Cloudflare anycast, big DNS hosts) is excluded. A new link to a known scam node adds `INFRA_LINK`. |
-| W | Watchers | WhoisDS newly registered domains + crt.sh certificates filtered for UAE look-alikes, and a bilingual SerpApi pack for Google search, ads and Maps (fake helplines). Every hit is auto-scanned and shown in **Early warnings** with first-seen time and blocklist status, plus coverage cards showing what each source checked (e.g. 70,000 new domains screened; 12 searches, 77 results and 44 Maps listings with 43 phone numbers checked). The server runs the new-domain + certificate sweep automatically 90 s after start-up and then every 24 h; the SerpApi probe runs on demand (`POST /api/watchers/run?serp=true`) to respect its quota. |
+| W | Watchers | WhoisDS newly registered domains (last 4 days, ~280k domains per sweep) + crt.sh certificates filtered for UAE look-alikes, and a bilingual SerpApi pack for Google search, ads and Maps (fake helplines). Every hit is auto-scanned and shown in **Early warnings** with first-seen time and blocklist status, plus coverage cards showing what each source checked (e.g. 70,000 new domains screened; 12 searches, 77 results and 44 Maps listings with 43 phone numbers checked). The server runs the new-domain + certificate sweep automatically 90 s after start-up and then every 24 h; the SerpApi probe runs on demand (`POST /api/watchers/run?serp=true`) to respect its quota. |
 | S | Safe Links | Click-time protection. A sender (telecom SMS gateway, bank notification system, messaging bot) rewrites every link through `/go?u=…&s=…`, signed with an HMAC server secret (`POST /api/protect`). When someone taps it, CyberGuard scans the link at that moment: a signed link that is not flagged redirects instantly; a flagged link shows a bilingual warning page with the score, reasons, the real official site, a pre-filled report to Aman and the evidence PDF. Unsigned links are never auto-redirected, so the gateway cannot be abused as an open redirect. |
 
 **Fast mode** (layers 0-5 + score) is about 1 s median per URL and is the default for batch and CLI. When a fast scan lands in the grey zone (score 10-24) and the site is online, CyberGuard takes a quick look at the page without a screenshot; only strong evidence counts there (a password / OTP / card / Emirates ID form, a brand claim together with such a form, or Telegram exfiltration). **Deep mode** adds layers 6-7 (up to ~45 s, mostly waiting for the Cloudflare scan).
@@ -87,15 +87,15 @@ flowchart LR
 
 | Run | N | Precision | Recall | F1 | FPR | TP | FP | FN | TN |
 |---|---|---|---|---|---|---|---|---|---|
-| Tuning sample + all legit, feeds OFF | 1559 | 1.000 | 0.769 | 0.869 | 0.000% | 821 | 0 | 247 | 491 |
-| Held-out OpenPhish only, feeds OFF | 1317 | 1.000 | 0.750 | 0.857 | 0.000% | 988 | 0 | 329 | 0 |
-| Tuning sample + all legit, feeds ON | 1559 | 1.000 | 0.857 | 0.923 | 0.000% | 915 | 0 | 153 | 491 |
-| Held-out OpenPhish only, feeds ON | 1317 | 1.000 | 0.821 | 0.902 | 0.000% | 1081 | 0 | 236 | 0 |
+| Tuning sample + all legit, feeds OFF | 1559 | 1.000 | 0.765 | 0.867 | 0.000% | 817 | 0 | 251 | 491 |
+| Held-out OpenPhish only, feeds OFF | 1317 | 1.000 | 0.755 | 0.860 | 0.000% | 994 | 0 | 323 | 0 |
+| Tuning sample + all legit, feeds ON | 1559 | 1.000 | 0.874 | 0.933 | 0.000% | 933 | 0 | 135 | 491 |
+| Held-out OpenPhish only, feeds ON | 1317 | 1.000 | 0.848 | 0.918 | 0.000% | 1117 | 0 | 200 | 0 |
 | UAE legit links only (official + business) | 326 | - | - | - | 0.000% | 0 | 0 | 0 | 326 |
 | Smishing Triad IOCs only, feeds OFF | 68 | 1.000 | 0.794 | 0.885 | 0.000% | 54 | 0 | 14 | 0 |
 | UAE synthetic patterns (not in headline), feeds OFF | 30 | 1.000 | 1.000 | 1.000 | 0.000% | 30 | 0 | 0 | 0 |
 
-Fast-mode latency per URL: median 796 ms, p95 2780 ms (feeds off, run from Abu Dhabi, concurrency 40).
+Fast-mode latency per URL: median 717 ms, p95 2734 ms (feeds off, run from Abu Dhabi, concurrency 40).
 
 Held-out rows contain only fraud URLs, so their precision is trivially 1.0; their recall is the estimate for unseen phishing.
 
@@ -182,4 +182,4 @@ The free instance sleeps after 15 minutes idle, so the first request after sleep
 
 - Detection design follows the team's research report (PhishLLM / KnowPhish reference-based detection, NOKEScam cheap-first ordering, Scameter tiers, InjectDefuser prompt hardening).
 - **Reused from the team's earlier FraudLand prototype** (adapted): URL normalisation + SSRF guard and IP-checked fetch (`app/pipeline/netsafe.py`), the HTML inspector (`app/pipeline/page.py`), the inverted-index infrastructure-correlation idea (`app/graph.py`, `app/store.py`), RDAP / crt.sh collectors (`app/pipeline/domain_intel.py`, `watchers/nrd_ct.py`), and the API-key check, rate-limit and security-header middleware (`app/main.py`).
-- Data: OpenPhish, URLhaus (abuse.ch), Tranco, Unicode confusables, Unit 42 and Resecurity public IOCs, IPinfo Lite (CC BY-SA 4.0), IBM Plex Sans Arabic (SIL OFL).
+- Data: OpenPhish, URLhaus and ThreatFox (abuse.ch), Phishing.Database, Phishing Army (CC BY-NC 4.0, used non-commercially), phishunt.io (CC0), PhishDestroy DestroyList (MIT), Tranco, Unicode confusables, Unit 42 and Resecurity public IOCs, IPinfo Lite (CC BY-SA 4.0), IBM Plex Sans Arabic (SIL OFL).
