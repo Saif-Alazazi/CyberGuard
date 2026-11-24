@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT))
 os.environ["CYBERGUARD_DB"] = str(ROOT / "eval" / "cache" / "eval.db")
 
 HEADLINE_FRAUD = {"openphish", "smishing_ioc"}
-HEADLINE_LEGIT = {"uae_official", "uae_business", "tranco"}
+HEADLINE_LEGIT = {"uae_official", "uae_business", "tranco", "legit_hosting"}
 
 
 def metrics(rows: list[dict], threshold: int) -> dict:
@@ -65,6 +65,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-feeds", action="store_true")
     ap.add_argument("--limit", type=int, default=0, help="sample N fraud URLs from openphish (0 = all)")
+    ap.add_argument("--holdout", action="store_true", help="use the OpenPhish URLs NOT in the --limit sample (never used for tuning)")
     ap.add_argument("--threshold", type=int, default=None)
     ap.add_argument("--concurrency", type=int, default=30)
     args = ap.parse_args()
@@ -76,10 +77,13 @@ def main() -> None:
         random.seed(7)
         op = [r for r in rows if r["slice"] == "openphish"]
         keep = set(id(r) for r in random.sample(op, min(args.limit, len(op))))
-        rows = [r for r in rows if r["slice"] != "openphish" or id(r) in keep]
+        if args.holdout:
+            rows = [r for r in rows if r["slice"] == "openphish" and id(r) not in keep]
+        else:
+            rows = [r for r in rows if r["slice"] != "openphish" or id(r) in keep]
     t0 = time.time()
     results = asyncio.run(run(rows, args.concurrency))
-    tag = "nofeeds" if args.no_feeds else "feeds"
+    tag = ("nofeeds" if args.no_feeds else "feeds") + ("_holdout" if args.holdout else "")
     out = ROOT / "eval" / "cache" / f"scores_{tag}.csv"
     with out.open("w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=list(results[0].keys()))
@@ -88,22 +92,21 @@ def main() -> None:
 
     head = [r for r in results if r["slice"] in HEADLINE_FRAUD | HEADLINE_LEGIT]
     uae_legit = [r for r in results if r["slice"] in ("uae_official", "uae_business")]
-    # Calibrate: lowest threshold with FPR <= 1% on UAE legit links and on all legit links
-    chosen = args.threshold
-    if chosen is None:
-        for t in range(20, 95, 5):
-            if metrics(uae_legit, t)["fpr"] <= 0.01 and metrics([r for r in head if r["label"] == "legit"], t)["fpr"] <= 0.01:
-                chosen = t
-                break
-        chosen = chosen or 50
-    print(f"\n## CyberGuard fast-mode evaluation ({'threat feeds OFF' if args.no_feeds else 'threat feeds ON'})")
-    print(f"validation set: {len(results)} URLs, run time {time.time() - t0:.0f}s, threshold {chosen} "
-          f"(config default {config.THRESHOLD})\n")
+    chosen = args.threshold or config.THRESHOLD
+    legit = [r for r in head if r["label"] == "legit"]
+    # Calibration aid: lowest threshold keeping FPR <= 1% on UAE legit links and on all legit links
+    calibrated = next((t for t in range(5, 100, 5) if metrics(uae_legit, t)["fpr"] <= 0.01 and metrics(legit, t)["fpr"] <= 0.01), None)
+    title = "threat feeds OFF" if args.no_feeds else "threat feeds ON"
+    if args.holdout:
+        title += ", HELD-OUT OpenPhish URLs never used for tuning"
+    print(f"\n## CyberGuard fast-mode evaluation ({title})")
+    print(f"validation set: {len(results)} URLs, run time {time.time() - t0:.0f}s, threshold {chosen}; "
+          f"lowest threshold with FPR <= 1% on this set: {calibrated}\n")
     print("| Set | N | Precision | Recall | F1 | FPR | TP | FP | FN | TN |")
     print("|---|---|---|---|---|---|---|---|---|---|")
     groups = [("Headline (OpenPhish + smishing IOCs vs all legit)", head),
               ("UAE legit only (official + UAE business)", uae_legit)]
-    for s in ["openphish", "smishing_ioc", "uae_synthetic", "uae_official", "uae_business", "tranco"]:
+    for s in ["openphish", "smishing_ioc", "uae_synthetic", "uae_official", "uae_business", "tranco", "legit_hosting"]:
         groups.append((f"slice: {s}", [r for r in results if r["slice"] == s]))
     for name, rs in groups:
         if not rs:

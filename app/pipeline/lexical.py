@@ -42,7 +42,27 @@ def _entropy(s: str) -> float:
     return -sum(v / len(s) * math.log2(v / len(s)) for v in c.values())
 
 
-def brand_hits(text: str) -> list[dict]:
+CODE_HOSTS = {"github.io", "gitlab.io"}
+PLATFORM_OWNER = {"blogspot.com": "google", "appspot.com": "google", "web.app": "google", "firebaseapp.com": "google",
+                  "sites.google.com": "google", "azurewebsites.net": "microsoft", "sharepoint.com": "microsoft",
+                  "amplifyapp.com": "amazon", "cloudfront.net": "amazon", "s3.amazonaws.com": "amazon"}
+TENANT_LURES = ("support", "service", "help", "secure", "verify", "wallet", "mail", "claim", "bonus", "reward", "gift",
+                "prize", "promo", "billing", "invoice", "refund", "auth", "login", "signin", "account", "update", "connect",
+                "recovery", "unlock", "airdrop", "hadiah", "resmi")
+
+
+def auto_generated(label: str) -> bool:
+    """Machine-generated tenant names typical of phishing kits on free hosting (e.g. k1xmn-tu9-izyg-iovhz-27-10-2026-aa)."""
+    flat = re.sub(r"[^a-z0-9]", "", label)
+    if len(flat) < 8:
+        return False
+    digits = sum(c.isdigit() for c in re.sub(r"(19|20)\d\d", "", flat))
+    chunks = [c for c in re.split(r"[-_.]", label) if c]
+    junk = [c for c in chunks if (re.search(r"\d", c) and re.search(r"[a-z]", c)) or (len(c) >= 4 and not re.search(r"[aeiouy]", c))]
+    return digits >= 4 or len(junk) >= 2 or (len(flat) >= 16 and _entropy(flat) > 3.9)
+
+
+def brand_hits(text: str, loose: bool = False) -> list[dict]:
     """Find UAE/global brand tokens (exact, confusable skeleton, leetspeak or 1-2 edit typos) in a host-like string."""
     d = data()
     lure_words = set(d.lures["url_lure_words"]) | {"uae", "ae", "dubai", "abudhabi", "gov", "online", "my", "e"}
@@ -60,7 +80,7 @@ def brand_hits(text: str) -> list[dict]:
         return rest in lure_words or rest.isdigit()
 
     def word_match(tok: str, ws: list[str]) -> bool:
-        if len(tok) >= 8 and tok in "".join(ws):
+        if (len(tok) >= 8 or (loose and len(tok) >= 5)) and tok in "".join(ws):
             return True
         pairs = ws + [a + b for a, b in zip(ws, ws[1:])]
         for w in pairs:
@@ -117,9 +137,14 @@ def analyse(url: str, host: str) -> list[dict]:
 
     hosting = d.hosting_suffix(host)
     scope_text = host[: -len(hosting) - 1] if hosting else (uhost[: -len(suffix) - 1] if suffix else uhost)
-    for h in brand_hits(scope_text):
+    tenant = scope_text.split(".")[-1] if hosting and scope_text else ""
+    for h in brand_hits(scope_text, loose=bool(hosting)):
         if d.brand(h["brand"]) and reg in d.brand(h["brand"]).get("domains", []):
             continue
+        if hosting in CODE_HOSTS and tenant == h["token"]:
+            continue  # e.g. google.github.io is the organisation's own GitHub Pages site
+        if PLATFORM_OWNER.get(hosting) == h["brand"] and not any(w in tenant for w in TENANT_LURES):
+            continue  # brand's own platform (googleprojectzero.blogspot.com); still flagged with lure words
         code = "FREE_HOST_BRAND" if hosting else "BRAND_IN_HOST"
         sigs.append({"code": code, "detail": f"{h['token']} ({h['how']})" + (f" on {hosting}" if hosting else ""),
                      "brand": h["brand"], "scope": h["scope"], "how": h["how"], "hosting": hosting})
@@ -129,21 +154,38 @@ def analyse(url: str, host: str) -> list[dict]:
         sigs.append({"code": "SUFFIX_TRICK", "detail": f"fake suffix pattern in {host}"})
 
     if tld in d.abused_tlds:
-        sigs.append({"code": "ABUSED_TLD", "detail": f".{tld}"})
+        short = len(dom) <= 6 or auto_generated(dom)
+        sigs.append({"code": "ABUSED_TLD", "detail": f".{tld}" + (f", short/random name '{dom}'" if short else ""),
+                     "weight": 20 if short else None})
     if hosting and not any(s["code"] == "FREE_HOST_BRAND" for s in sigs):
         sigs.append({"code": "FREE_HOSTING", "detail": hosting})
+    if hosting:
+        if auto_generated(tenant):
+            sigs.append({"code": "RANDOM_TENANT", "detail": f"{tenant}.{hosting}"})
+        lures = [w for w in TENANT_LURES if w in tenant]
+        if lures:
+            sigs.append({"code": "LURE_IN_HOST", "detail": ", ".join(lures[:3])})
+        path = unquote(urlsplit(url).path).lower()
+        for h in brand_hits(path):
+            if not any(s.get("brand") == h["brand"] for s in sigs):
+                sigs.append({"code": "FREE_HOST_BRAND", "detail": f"{h['token']} in page path on {hosting}", "brand": h["brand"],
+                             "scope": h["scope"], "how": "brand name in the page path", "hosting": hosting})
+                break
 
     low = unquote(url).lower()
-    host_words = [w for w in _LOGIN_WORDS if w in host]
+    host_words = [w for w in (TENANT_LURES if tld in d.abused_tlds else _LOGIN_WORDS) if w in host]
     path_words = [w for w in _LOGIN_WORDS if w in urlsplit(low).path + "?" + urlsplit(low).query]
     if host_words:
         sigs.append({"code": "LURE_IN_HOST", "detail": ", ".join(host_words[:3])})
     if path_words:
         sigs.append({"code": "LURE_IN_PATH", "detail": ", ".join(path_words[:3])})
+    frag = unquote(unquote(urlsplit(url).fragment)).lower()
+    if re.search(r"[\w.+-]+@[\w-]+\.[\w.]+|^-?e-?mail-?$", frag):
+        sigs.append({"code": "EMAIL_IN_URL", "detail": "victim e-mail address pre-filled in the link fragment"})
     if dom.count("-") >= 2 or len(sub.split(".")) >= 3:
         sigs.append({"code": "COMPLEX_HOST", "detail": host})
     core = re.sub(r"[^a-z]", "", dom)
-    if len(dom) >= 8 and (_entropy(dom) > 3.3 and sum(c.isdigit() for c in dom) >= 2 or not re.search(r"[aeiou]{1}", core)):
+    if not hosting and len(dom) >= 8 and (auto_generated(dom) or not re.search(r"[aeiou]", core)):
         sigs.append({"code": "RANDOM_LABEL", "detail": dom})
     if re.fullmatch(r"\d+\.\d+\.\d+\.\d+", host):
         sigs.append({"code": "IP_HOST", "detail": host})

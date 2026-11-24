@@ -97,7 +97,7 @@ async def scan_url(url: str, mode: str = "fast", message: dict | None = None, so
             reasons.append(reason(s["code"], b["name_en"] + how, w, b.get("name_ar", b["name_en"]) + how))
             brands_claimed.append(s["brand"])
         else:
-            reasons.append(reason(s["code"], s["detail"]))
+            reasons.append(reason(s["code"], s["detail"], s.get("weight")))
     strong_lex = any(s["code"] in STRONG_LEXICAL for s in lex_hits)
     if official and strong_lex:
         reasons.append(reason("CLOAK", "a look-alike link redirects to the real official site (typical scanner evasion)"))
@@ -119,7 +119,7 @@ async def scan_url(url: str, mode: str = "fast", message: dict | None = None, so
     reg = gate["registrable"]
     first_ip = next((h.get("ip") for h in reversed(hops) if h.get("ip")), None)
     shared = bool(gate["hosting"] or gate["shortener"] or trusted_final)
-    want_intel = deep or not trusted_final
+    want_intel = (deep or not trusted_final) and not gate["hosting"] and not gate["shortener"]
     feed_res, intel = await asyncio.gather(
         _timed(feeds.lookup(final_url, final_host, reg, check_host=not shared), 6, "threat feeds", skipped),
         _timed(domain_intel.lookup(reg, first_ip), 7, "RDAP/WHOIS + IPinfo", skipped) if want_intel else asyncio.sleep(0),

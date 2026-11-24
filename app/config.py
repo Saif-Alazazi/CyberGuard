@@ -1,7 +1,9 @@
 """Runtime settings, read once from the environment (.env locally, dashboard vars on Render)."""
 import os
+import ssl
 from pathlib import Path
 
+import certifi
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -22,7 +24,7 @@ API_KEY = os.environ.get("CYBERGUARD_API_KEY", "")
 # Feeds can be switched off for honest evaluation (OpenPhish URLs would otherwise match the OpenPhish feed).
 FEEDS_ENABLED = os.environ.get("CYBERGUARD_DISABLE_FEEDS", "") != "1"
 # Binary threshold: score >= THRESHOLD -> "fraud". Calibrated in eval/run_eval.py.
-THRESHOLD = int(os.environ.get("CYBERGUARD_THRESHOLD", "45"))
+THRESHOLD = int(os.environ.get("CYBERGUARD_THRESHOLD") or "25")
 
 HOP_TIMEOUT = 5.0
 MAX_HOPS = 10
@@ -31,3 +33,8 @@ FAST_BUDGET = 6.0
 USER_AGENT = ("Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 "
               "(KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1")
 VERSION = "1.0.0"
+# One TLS context for every outbound client: building it per request costs ~100 ms CPU.
+SSL_CTX = ssl.create_default_context(cafile=certifi.where())
+NO_VERIFY_CTX = ssl.create_default_context()
+NO_VERIFY_CTX.check_hostname = False
+NO_VERIFY_CTX.verify_mode = ssl.CERT_NONE

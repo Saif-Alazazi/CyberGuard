@@ -89,7 +89,7 @@ async def cloudflare_scan(url: str) -> dict:
         return {"error": "not configured"}
     base = CF_BASE.format(acc=config.CLOUDFLARE_ACCOUNT_ID)
     hdr = {"Authorization": f"Bearer {config.CLOUDFLARE_API_TOKEN}"}
-    async with httpx.AsyncClient(timeout=15, headers=hdr) as c:
+    async with httpx.AsyncClient(timeout=15, headers=hdr, verify=config.SSL_CTX) as c:
         r = await c.post(f"{base}/scan", json={"url": url, "visibility": "Unlisted", "screenshotsResolutions": ["mobile"],
                                                "customagent": config.USER_AGENT})
         if r.status_code >= 400:

@@ -8,6 +8,7 @@ legit slices
   uae_official   real links crawled from official UAE bank/government sites (deep pages)
   uae_business   real links from legitimate UAE businesses that are NOT in the allowlist
   tranco         real deep links crawled from random Tranco top-10k sites
+  legit_hosting  well-known organisations' sites on free hosting platforms (github.io, blogspot)
 
 Run: python eval/build_validation.py   (needs internet; takes a few minutes)
 """
@@ -78,6 +79,7 @@ UAE_OFFICIAL_FIXED = [
     "https://www.centralbank.ae/en/our-operations/consumer-protection/", "https://www.rakbank.ae/en/personal/digital-banking",
     "https://www.cbd.ae/personal/digital-banking", "https://login.wio.io/", "https://mypay.payit.ae/",
 ]
+LEGIT_HOSTING = ['https://google.github.io/styleguide/', 'https://microsoft.github.io/generative-ai-for-beginners/', 'https://facebook.github.io/react-native/', 'https://mozilla.github.io/pdf.js/', 'https://aws.github.io/copilot-cli/', 'https://kubernetes.github.io/ingress-nginx/', 'https://openai.github.io/openai-agents-python/', 'https://pytorch.github.io/', 'https://apple.github.io/swift-format/', 'https://twbs.github.io/', 'https://lodash.github.io/', 'https://sindresorhus.github.io/', 'https://d3.github.io/', 'https://jquery.github.io/', 'https://googleprojectzero.blogspot.com/', 'https://android-developers.blogspot.com/', 'https://googleonlinesecurity.blogspot.com/', 'https://chromium.github.io/', 'https://nvidia.github.io/', 'https://ibm.github.io/', 'https://adobe.github.io/', 'https://netflix.github.io/', 'https://spotify.github.io/', 'https://shopify.github.io/', 'https://uber.github.io/']
 UAE_BUSINESS_SEEDS = [
     "https://www.noon.com/uae-en/", "https://uae.dubizzle.com", "https://www.bayut.com", "https://www.propertyfinder.ae",
     "https://www.talabat.com/uae", "https://www.careem.com", "https://www.emirates.com/ae/english/", "https://www.etihad.com/en-ae/",
@@ -150,7 +152,9 @@ def unit42_urls() -> list[str]:
             if "unit42" in token or "paloalto" in token:
                 continue
             out.append("http://" + token.replace("[.]", ".").replace("[", "").replace("]", ""))
-    return list(dict.fromkeys(out))
+    # the IOC notes also quote the legitimate brand domains being imitated (e.g. www.fedex.com): drop popular domains
+    tranco = set((ROOT / "data" / "tranco_top10k.txt").read_text().split())
+    return [u for u in dict.fromkeys(out) if etld1(urlsplit(u).hostname or "") not in tranco]
 
 
 def main() -> None:
@@ -177,6 +181,8 @@ def main() -> None:
     tr = asyncio.run(crawl_all(["https://" + d for d in sample], 1))
     print("tranco", len(tr))
     rows += [(u, "legit", "tranco", "crawled from Tranco top-10k site") for u in tr]
+
+    rows += [(u, "legit", "legit_hosting", "well-known organisation site on a free hosting platform") for u in LEGIT_HOSTING]
 
     seen, final = set(), []
     for r in rows:

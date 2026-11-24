@@ -12,7 +12,7 @@ import dns.exception
 
 import httpx
 
-from app.config import HOP_TIMEOUT, MAX_BODY, USER_AGENT
+from app.config import HOP_TIMEOUT, MAX_BODY, NO_VERIFY_CTX, USER_AGENT
 
 
 class UnsafeURL(ValueError):
@@ -85,7 +85,7 @@ def _resolver() -> dns.asyncresolver.Resolver:
 
 
 def client() -> httpx.AsyncClient:
-    return httpx.AsyncClient(timeout=HOP_TIMEOUT, follow_redirects=False, verify=False, trust_env=False,
+    return httpx.AsyncClient(timeout=HOP_TIMEOUT, follow_redirects=False, verify=NO_VERIFY_CTX, trust_env=False,
                              headers={"User-Agent": USER_AGENT, "Accept-Language": "ar-AE,ar;q=0.9,en;q=0.8",
                                       "Accept": "text/html,application/xhtml+xml,*/*;q=0.8"})
 

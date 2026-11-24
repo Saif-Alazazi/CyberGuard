@@ -59,7 +59,7 @@ async def brand_check(final_url: str, page: dict, gate: dict) -> dict | None:
         contents.append({"inline_data": {"mime_type": "image/png", "data": base64.b64encode(shot).decode()}})
     body = {"contents": [{"role": "user", "parts": contents}],
             "generationConfig": {"responseMimeType": "application/json", "responseSchema": SCHEMA, "temperature": 0}}
-    async with httpx.AsyncClient(timeout=25) as c:
+    async with httpx.AsyncClient(timeout=25, verify=config.SSL_CTX) as c:
         r = await c.post(f"https://generativelanguage.googleapis.com/v1beta/models/{config.GEMINI_MODEL}:generateContent",
                          headers={"x-goog-api-key": config.GEMINI_API_KEY}, json=body)
     r.raise_for_status()

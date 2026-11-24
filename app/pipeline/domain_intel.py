@@ -77,7 +77,7 @@ def age_days(created: str | None) -> int | None:
 
 async def lookup(registrable: str, ip: str | None) -> dict:
     out = {"whois": None, "ip": None, "age_days": None, "skipped": []}
-    async with httpx.AsyncClient(timeout=5) as c:
+    async with httpx.AsyncClient(timeout=5, verify=config.SSL_CTX) as c:
         tasks = {"whois": whois_ae(registrable) if registrable.endswith(".ae") else rdap(c, registrable)}
         if ip and config.IPINFO_TOKEN:
             tasks["ip"] = ipinfo(c, ip)

@@ -16,7 +16,7 @@ async def _openphish() -> tuple[set, set]:
     async with _lock:
         if time.time() - _state["loaded"] > 3600:
             try:
-                async with httpx.AsyncClient(timeout=15) as c:
+                async with httpx.AsyncClient(timeout=15, verify=config.SSL_CTX) as c:
                     text = (await c.get(_OPENPHISH)).text
                 urls = {l.strip().rstrip("/") for l in text.splitlines() if l.startswith("http")}
                 hosts = {u.split("/")[2].lower() for u in urls if u.count("/") >= 2}
@@ -51,7 +51,7 @@ async def dns_records(c: httpx.AsyncClient, host: str, registrable: str) -> dict
 async def lookup(url: str, host: str, registrable: str, check_host: bool) -> dict:
     """Return {'hits': [...], 'dns': {...}, 'skipped': [...]}. check_host=False for shared/popular hosts."""
     hits, skipped = [], []
-    async with httpx.AsyncClient(timeout=4) as c:
+    async with httpx.AsyncClient(timeout=4, verify=config.SSL_CTX) as c:
         tasks = {"dns": dns_records(c, host, registrable)}
         if config.FEEDS_ENABLED:
             tasks["cf_filter"] = doh(c, "https://security.cloudflare-dns.com/dns-query", host)

@@ -2357,7 +2357,6 @@ http://elsaeeda.com/english/m0nnet/ldn2.html,fraud,smishing_ioc,Unit 42 smishing
 http://elsaeeda.com/english/m0nnet/otp.html,fraud,smishing_ioc,Unit 42 smishing IOCs 2025
 http://elsaeeda.com/english/m0nnet/c.html,fraud,smishing_ioc,Unit 42 smishing IOCs 2025
 http://www.fedex.com@servicece.co,fraud,smishing_ioc,Unit 42 smishing IOCs 2025
-http://www.fedex.com,fraud,smishing_ioc,Unit 42 smishing IOCs 2025
 http://servicece.co.,fraud,smishing_ioc,Unit 42 smishing IOCs 2025
 http://www.ca.gov@igbp.cc/us,fraud,smishing_ioc,Unit 42 smishing IOCs 2025
 http://www.fedex.com@bestaz.ink/us,fraud,smishing_ioc,Unit 42 smishing IOCs 2025
@@ -2881,3 +2880,28 @@ https://bandcamp.com,legit,tranco,crawled from Tranco top-10k site
 https://bandcamp.com/_fs-ch-1T1wmsGaOgGaSxcX/assets/inter-var.woff2,legit,tranco,crawled from Tranco top-10k site
 https://auburn.edu,legit,tranco,crawled from Tranco top-10k site
 https://www.vetmed.auburn.edu/blog/cvm-news/auburn-vet-med-team-helps-bengal-tiger-regain-his-bite/?utm_source=auburnu&utm_medium=web,legit,tranco,crawled from Tranco top-10k site
+https://google.github.io/styleguide/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://microsoft.github.io/generative-ai-for-beginners/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://facebook.github.io/react-native/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://mozilla.github.io/pdf.js/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://aws.github.io/copilot-cli/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://kubernetes.github.io/ingress-nginx/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://openai.github.io/openai-agents-python/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://pytorch.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://apple.github.io/swift-format/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://twbs.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://lodash.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://sindresorhus.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://d3.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://jquery.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://googleprojectzero.blogspot.com/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://android-developers.blogspot.com/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://googleonlinesecurity.blogspot.com/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://chromium.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://nvidia.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://ibm.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://adobe.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://netflix.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://spotify.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://shopify.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
+https://uber.github.io/,legit,legit_hosting,well-known organisation site on a free hosting platform
