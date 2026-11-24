@@ -88,14 +88,14 @@ flowchart LR
 | Run | N | Precision | Recall | F1 | FPR | TP | FP | FN | TN |
 |---|---|---|---|---|---|---|---|---|---|
 | Tuning sample + all legit, feeds OFF | 1559 | 1.000 | 0.765 | 0.867 | 0.000% | 817 | 0 | 251 | 491 |
-| Held-out OpenPhish only, feeds OFF | 1317 | 1.000 | 0.755 | 0.860 | 0.000% | 994 | 0 | 323 | 0 |
-| Tuning sample + all legit, feeds ON | 1559 | 1.000 | 0.874 | 0.933 | 0.000% | 933 | 0 | 135 | 491 |
-| Held-out OpenPhish only, feeds ON | 1317 | 1.000 | 0.848 | 0.918 | 0.000% | 1117 | 0 | 200 | 0 |
+| Held-out OpenPhish only, feeds OFF | 1317 | 1.000 | 0.747 | 0.855 | 0.000% | 984 | 0 | 333 | 0 |
+| Tuning sample + all legit, feeds ON | 1559 | 1.000 | 0.908 | 0.952 | 0.000% | 970 | 0 | 98 | 491 |
+| Held-out OpenPhish only, feeds ON | 1317 | 1.000 | 0.913 | 0.954 | 0.000% | 1202 | 0 | 115 | 0 |
 | UAE legit links only (official + business) | 326 | - | - | - | 0.000% | 0 | 0 | 0 | 326 |
 | Smishing Triad IOCs only, feeds OFF | 68 | 1.000 | 0.794 | 0.885 | 0.000% | 54 | 0 | 14 | 0 |
 | UAE synthetic patterns (not in headline), feeds OFF | 30 | 1.000 | 1.000 | 1.000 | 0.000% | 30 | 0 | 0 | 0 |
 
-Fast-mode latency per URL: median 717 ms, p95 2734 ms (feeds off, run from Abu Dhabi, concurrency 40).
+Fast-mode latency per URL: median 765 ms, p95 2405 ms (feeds off, run from Abu Dhabi, concurrency 40).
 
 Held-out rows contain only fraud URLs, so their precision is trivially 1.0; their recall is the estimate for unseen phishing.
 

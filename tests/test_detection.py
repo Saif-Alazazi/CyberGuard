@@ -86,3 +86,11 @@ def test_safe_links_are_signed_and_rewritten():
     assert safelinks.valid("https://rta-fines.top/pay", safelinks.sign("https://rta-fines.top/pay"))
     assert not safelinks.valid("https://evil.example/", safelinks.sign("https://rta-fines.top/pay"))
     assert not safelinks.valid("https://evil.example/", "")
+
+
+def test_blocklist_matches_tenant_on_shared_hosting_but_never_the_platform():
+    from app.pipeline.feeds import _bulk_candidates
+    assert _bulk_candidates("2017-facebook.blogspot.com") == ["2017-facebook.blogspot.com"]
+    assert _bulk_candidates("sites.google.com") == []
+    assert _bulk_candidates("login.evil-example.top") == ["login.evil-example.top", "evil-example.top"]
+    assert _bulk_candidates("www.adcb.com") == []

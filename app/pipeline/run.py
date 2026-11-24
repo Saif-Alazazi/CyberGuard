@@ -1,5 +1,6 @@
 """Orchestrates the funnel: extract -> unroll -> allowlist -> lexical -> feeds + domain intel -> (deep: page + LLM) -> score."""
 import asyncio
+import re
 import secrets
 import time
 from datetime import datetime, timezone
@@ -61,6 +62,13 @@ async def scan_url(url: str, mode: str = "fast", message: dict | None = None, so
         chain = {"hops": [], "final_url": normalize(url)[0], "error": "timeout", "body": b"", "content_type": ""}
     hops = chain["hops"]
     final_url = chain["final_url"]
+    # A block / CAPTCHA / rate-limit page on another site (e.g. google.com/sorry) is not the link's real destination:
+    # judge the hop before it, so such a redirect can never borrow a popular domain's reputation.
+    # (a plain 403 is NOT treated this way: UAE banks often answer 403 to foreign scanners on their real site)
+    if len(hops) > 1 and (hops[-1].get("status") == 429 or re.search(r"/sorry/|captcha|/challenge", hops[-1]["url"], re.I)):
+        if allowlist.check(hops[-1]["url"])["registrable"] != allowlist.check(hops[-2]["url"])["registrable"]:
+            final_url = hops[-2]["url"]
+            skipped.append("last redirect led to a block / CAPTCHA page; the link before it was judged")
     final_host = (urlsplit(final_url).hostname or "").lower()
     if chain["error"] == "ssrf_blocked":
         skipped.append("a redirect pointed to an internal address and was blocked (SSRF guard)")
@@ -133,7 +141,9 @@ async def scan_url(url: str, mode: str = "fast", message: dict | None = None, so
     shared = bool(gate["hosting"] or gate["shortener"] or trusted_final)
     want_intel = (deep or not trusted_final) and not gate["hosting"] and not gate["shortener"]
     feed_res, intel = await asyncio.gather(
-        _timed(feeds.lookup(final_url, final_host, reg, check_host=not shared), 6, "threat feeds", skipped),
+        _timed(feeds.lookup(final_url, final_host, reg, check_host=not shared,
+                            also_hosts=[(urlsplit(u).hostname or "").lower() for u in [url] + [h["url"] for h in hops]]),
+               6, "threat feeds", skipped),
         _timed(domain_intel.lookup(reg, first_ip), 7, "RDAP/WHOIS + IPinfo", skipped) if want_intel else asyncio.sleep(0),
     )
     known_bad = False

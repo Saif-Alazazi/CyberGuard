@@ -45,8 +45,12 @@ async def load_bulk() -> dict:
 
 
 def _bulk_candidates(host: str) -> list[str]:
-    """Host and its parent domains, stopping before anything official, popular or a shared-hosting apex."""
+    """Host and its parent domains, stopping before anything official, popular or a shared-hosting apex.
+    A tenant on shared hosting (x.blogspot.com, y.pages.dev) is matched exactly."""
     d = data()
+    suf = d.hosting_suffix(host)
+    if suf:
+        return [host] if host != suf else []
     reg = split_host(host)[3]
     if d.official_brand(reg) or d.tranco_rank(reg) or d.global_official(reg):
         return []
@@ -97,7 +101,7 @@ async def dns_records(c: httpx.AsyncClient, host: str, registrable: str) -> dict
     return out
 
 
-async def lookup(url: str, host: str, registrable: str, check_host: bool) -> dict:
+async def lookup(url: str, host: str, registrable: str, check_host: bool, also_hosts: list[str] | None = None) -> dict:
     """Return {'hits': [...], 'dns': {...}, 'skipped': [...]}. check_host=False for shared/popular hosts."""
     hits, skipped = [], []
     async with httpx.AsyncClient(timeout=4, verify=config.SSL_CTX) as c:
@@ -131,11 +135,11 @@ async def lookup(url: str, host: str, registrable: str, check_host: bool) -> dic
             hits.append({"source": "OpenPhish", "match": "host"})
     bulk = results.get("bulk")
     if isinstance(bulk, dict):
-        cands = _bulk_candidates(host)
+        cands = list(dict.fromkeys(c for h in [host] + [x for x in (also_hosts or []) if x] for c in _bulk_candidates(h)))
         for name, s in bulk.items():
             m = next((c for c in cands if c in s), None)
             if m:
-                hits.append({"source": name, "match": "domain" if m == host else f"parent domain {m}"})
+                hits.append({"source": name, "match": "domain" if m == host else f"domain in redirect chain {m}"})
     tf = results.get("threatfox")
     if isinstance(tf, httpx.Response) and tf.status_code == 200:
         j = tf.json()
