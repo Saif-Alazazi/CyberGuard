@@ -156,8 +156,8 @@ Rate limits per client: 300 single checks per minute (`/api/scan`, `/go`, `/api/
 
 ## Tools, APIs and data
 
-- **Python 3.12, FastAPI, httpx, dnspython, tldextract** (Public Suffix List snapshot bundled, no network fetch), **rapidfuzz, networkx, reportlab + arabic-reshaper + python-bidi, mmh3, phonenumbers**. Vanilla HTML/JS front end, vis-network for the graph.
-- **APIs:** Cloudflare URL Scanner (screenshots, DOM, verdict), Cloudflare DNS-over-HTTPS (1.1.1.1 and 1.1.1.2 filter), Google Gemini `gemini-4-hydrogen` (optional), URLhaus, OpenPhish feed, rdap.org + aeDA port-43 WHOIS, IPinfo Lite, crt.sh, WhoisDS, SerpApi (Google search / ads / Maps).
+- **Python 3.12, FastAPI, httpx, dnspython, tldextract** (Public Suffix List snapshot bundled, no network fetch), **rapidfuzz, networkx, cryptography (TLS certificates), reportlab + arabic-reshaper + python-bidi, mmh3, phonenumbers**. Vanilla HTML/JS front end, vis-network for the graph.
+- **APIs:** Cloudflare URL Scanner (screenshots, DOM, verdict), Cloudflare DNS-over-HTTPS (1.1.1.1 and 1.1.1.2 filter), Google Gemini `gemini-4-hydrogen` (optional), Google Safe Browsing v4 (optional, free key), URLhaus and ThreatFox (abuse.ch), OpenPhish feed, Phishing.Database, Phishing Army, phishunt.io and PhishDestroy DestroyList blocklists, rdap.org + aeDA port-43 WHOIS, IPinfo Lite, crt.sh, WhoisDS, SerpApi (Google search / ads / Maps).
 - **Data (in `data/`):** `uae_brands.json` (47 UAE entities: English + Arabic names, official and legacy domains, tokens, helplines tagged `src` / `unverified`), `global_brands.json`, `shorteners.txt`, `free_hosting.txt`, `abused_tlds.txt` (Unit 42 / Resecurity), `lures_en_ar.json` (bilingual lexicon; source-quoted phrases weighted higher), `confusables_min.json` (Unicode TR39 subset), `tranco_top10k.txt` (Tranco list Q2464), and the IBM Plex Sans Arabic font (OFL).
 
 ## Limitations (stated plainly)
