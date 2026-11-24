@@ -40,22 +40,25 @@ app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 # In-process rate limit and security headers (adapted from the FraudLand prototype API).
 _rate_lock = threading.Lock()
-_hits: dict[str, deque] = defaultdict(deque)
-LIMIT_PER_MIN = 40
+_hits: dict[tuple[str, str], deque] = defaultdict(deque)
+# Per client per minute. Generous for single checks so a scripted test set is not cut off; bulk work should use
+# /api/batch (up to 500 links per request).
+LIMITS = {"batch": 20, "single": 300}
 
 
 @app.middleware("http")
 async def guard(request: Request, call_next):
     if request.url.path.startswith(("/api/scan", "/api/batch", "/api/protect", "/go")):
+        bucket = "batch" if request.url.path.startswith("/api/batch") else "single"
         ident = request.headers.get("x-forwarded-for", request.client.host if request.client else "?").split(",")[0]
         now = time.monotonic()
         with _rate_lock:
-            q = _hits[ident]
+            q = _hits[(ident, bucket)]
             while q and now - q[0] > 60:
                 q.popleft()
-            if len(q) >= LIMIT_PER_MIN:
-                return JSONResponse({"detail": "Rate limit exceeded, try again in a minute."}, status_code=429,
-                                    headers={"Retry-After": "60"})
+            if len(q) >= LIMITS[bucket]:
+                return JSONResponse({"detail": "Rate limit exceeded, try again in a minute (use /api/batch for bulk)."},
+                                    status_code=429, headers={"Retry-After": "60"})
             q.append(now)
     resp = await call_next(request)
     resp.headers["X-Content-Type-Options"] = "nosniff"

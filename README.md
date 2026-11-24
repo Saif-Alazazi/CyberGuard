@@ -140,6 +140,8 @@ The free instance sleeps after 15 minutes idle, so the first request after sleep
 
 ### API
 
+Rate limits per client: 300 single checks per minute (`/api/scan`, `/go`, `/api/protect`) and 20 batch uploads per minute (`/api/batch`, up to 500 links each). For large test sets, use `/api/batch` or `cli.py`.
+
 | Method | Path | Purpose |
 |---|---|---|
 | POST | `/api/scan` | `{"input": "<url or message>", "mode": "fast\|deep", "sender": "+63…"}` → one result per link |
