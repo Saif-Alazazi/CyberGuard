@@ -8,6 +8,7 @@ import argparse
 import asyncio
 import json
 import logging
+import sys
 
 from app import store
 from app.config import DATA_DIR
@@ -52,6 +53,8 @@ def run_watchers(with_serp: bool = False) -> list[dict]:
         except Exception as exc:
             log.warning("SerpApi failed: %s", exc)
     scanned = asyncio.run(_scan_hits(hits))
+    # Search results that merely mention a brand (blogs, guides) are kept only if the scan or phone check flags them.
+    scanned = [w for w in scanned if w["source"] in ("nrd", "ct") or w.get("phones") or (w["score"] or 0) >= 25]
     for w in scanned:
         store.add_warning(w)
     return scanned
@@ -62,7 +65,9 @@ def main() -> None:
     ap.add_argument("--serp", action="store_true")
     ap.add_argument("--export", action="store_true")
     args = ap.parse_args()
+    sys.stdout.reconfigure(encoding="utf-8")
     logging.basicConfig(level=logging.INFO)
+    logging.getLogger("httpx").setLevel(logging.WARNING)  # request URLs would otherwise print the SerpApi key
     store.init()
     scanned = run_watchers(args.serp)
     for w in scanned:

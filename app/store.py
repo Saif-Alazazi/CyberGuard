@@ -38,6 +38,12 @@ def conn():
 def init() -> None:
     with conn() as c:
         c.executescript(SCHEMA)
+        empty = c.execute("SELECT COUNT(*) FROM scans").fetchone()[0] == 0
+    scans = DATA_DIR / "seed_scans.jsonl"
+    if empty and scans.exists():  # a fresh (ephemeral) deployment starts with the watchers' last findings
+        for line in scans.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                save_scan(json.loads(line), None)
     seed = DATA_DIR / "early_warnings_seed.json"
     if seed.exists():
         for w in json.loads(seed.read_text(encoding="utf-8")):
@@ -69,16 +75,21 @@ def _entities(r: dict) -> list[tuple[str, str]]:
     return list(dict.fromkeys(ents))
 
 
+def node_key(r: dict) -> str | None:
+    """Graph identity: the full host on shared hosting platforms (tenant sites are independent), else eTLD+1."""
+    return r.get("final_host") if (r.get("allowlist") or {}).get("hosting") else r.get("registrable")
+
+
 def save_scan(r: dict, screenshot: bytes | None) -> None:
+    key = node_key(r)
     with conn() as c:
         c.execute("INSERT OR REPLACE INTO scans VALUES(?,?,?,?,?,?,?,?,?,?)",
-                  (r["id"], r["created_utc"], r["input_url"], r.get("final_url"), r.get("registrable"), r["score"],
+                  (r["id"], r["created_utc"], r["input_url"], r.get("final_url"), key, r["score"],
                    r["tier"], r["label"], r.get("source", "user"), json.dumps(r, default=str, ensure_ascii=False)))
         if screenshot:
             c.execute("INSERT OR REPLACE INTO screenshots VALUES(?,?)", (r["id"], screenshot))
-        if r.get("registrable") and r["tier"] != "official":
-            c.executemany("INSERT INTO entities VALUES(?,?,?,?)",
-                          [(r["id"], r["registrable"], k, v) for k, v in _entities(r)])
+        if key and r["tier"] != "official":
+            c.executemany("INSERT INTO entities VALUES(?,?,?,?)", [(r["id"], key, k, v) for k, v in _entities(r)])
 
 
 def get_scan(scan_id: str) -> dict | None:
@@ -122,7 +133,7 @@ def infra_links(registrable: str, ip: str | None, ns: list[str], page: dict | No
 def graph_rows() -> tuple[list[dict], list[dict]]:
     with conn() as c:
         scans = [dict(r) for r in c.execute(
-            "SELECT registrable, MAX(score) score, MAX(label) label, MAX(id) id FROM scans WHERE tier<>'official' "
+            "SELECT registrable, MAX(score) score, MAX(label) label, MAX(id) id FROM scans WHERE label='fraud' "
             "AND registrable IS NOT NULL GROUP BY registrable")]
         ents = [dict(r) for r in c.execute("SELECT DISTINCT registrable, kind, value FROM entities")]
     return scans, ents

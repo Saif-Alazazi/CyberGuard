@@ -124,8 +124,9 @@ function renderResult(r) {
 
   const intel = r.intel || {}, who = intel.whois || {}, ip = intel.ip || {};
   const domainInfo = kv([
+    [t("hosting"), r.allowlist?.hosting ? `${r.allowlist.hosting} (${t("shared")})` : null],
     [t("registrar"), who.registrar || (who.error ? who.error : null)],
-    [t("created"), who.created ? `${who.created.slice(0, 10)} (${intel.age_days} ${t("age")})` : (r.tier === "official" ? null : t("unknown"))],
+    [t("created"), who.created ? `${who.created.slice(0, 10)} (${intel.age_days} ${t("age")})` : (r.tier === "official" || r.allowlist?.hosting ? null : t("unknown"))],
     [t("ip"), ip.ip ? `${ip.ip} · ${ip.asn || ""} ${ip.as_name || ""} · ${ip.country || ""}${ip.cloudflare_proxied ? " · Cloudflare proxy" : ""}` : null],
     [t("ns"), (who.nameservers?.length ? who.nameservers : r.dns?.ns || []).join(", ")],
     [t("feeds"), r.feeds?.length ? r.feeds.map((f) => `${f.source} (${f.match})`).join("; ") : t("not_listed")],

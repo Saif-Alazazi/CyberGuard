@@ -19,8 +19,9 @@ from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Tabl
 
 from app.config import DATA_DIR, VERSION
 
-pdfmetrics.registerFont(TTFont("Naskh", str(DATA_DIR / "fonts" / "NotoNaskhArabic-Regular.ttf")))
-pdfmetrics.registerFont(TTFont("NaskhBold", str(DATA_DIR / "fonts" / "NotoNaskhArabic-Bold.ttf")))
+# IBM Plex Sans Arabic (OFL) carries both Arabic and Latin glyphs, so mixed lines render fully.
+pdfmetrics.registerFont(TTFont("Naskh", str(DATA_DIR / "fonts" / "IBMPlexSansArabic-Regular.ttf")))
+pdfmetrics.registerFont(TTFont("NaskhBold", str(DATA_DIR / "fonts" / "IBMPlexSansArabic-Bold.ttf")))
 GST = timezone(timedelta(hours=4), "GST")
 NS = uuid.UUID("6f1d3c2a-8b7e-4c1a-9d2f-0a5b7c9e1f30")
 TIER_COLOR = {"official": "#1f8a4c", "not_verified": "#6b7280", "suspicious": "#c99a06", "likely_scam": "#d9622b",
@@ -29,6 +30,22 @@ TIER_COLOR = {"official": "#1f8a4c", "not_verified": "#6b7280", "suspicious": "#
 
 def ar(text: str) -> str:
     return get_display(arabic_reshaper.reshape(text or ""))
+
+
+def ar_block(text: str, style: ParagraphStyle, width: float) -> Paragraph:
+    """Wrap Arabic in logical order first, then shape + reorder each line (ReportLab wraps visual text wrongly)."""
+    lines, cur = [], []
+    for word in (text or "").split():
+        trial = " ".join(cur + [word])
+        if cur and pdfmetrics.stringWidth(ar(trial), style.fontName, style.fontSize) > width:
+            lines.append(" ".join(cur))
+            cur = [word]
+        else:
+            cur.append(word)
+    if cur:
+        lines.append(" ".join(cur))
+    safe = [ar(l).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") for l in lines]
+    return Paragraph("<br/>".join(safe), style)
 
 
 def _times(iso: str) -> tuple[str, str]:
@@ -157,10 +174,10 @@ def build_pdf(r: dict, screenshot: bytes | None) -> bytes:
             ["Binary label", wrap(f"{r['label']} (threshold {r['threshold']})")]]
     el += [Paragraph("Link", h2), _kv(rows)]
 
-    el.append(Paragraph("Why / الأسباب", h2))
+    el.append(Paragraph(f"Why / <font name='NaskhBold'>{ar('الأسباب')}</font>", h2))
     for x in r.get("reasons", [])[:10]:
         el.append(Paragraph(f"<b>[{esc(x['code'])} {x['weight']:+d}]</b> {esc(x['en'])}", body))
-        el.append(Paragraph(esc(ar(x["ar"])), arab))
+        el.append(ar_block(x["ar"], arab, 172 * mm))
     if r.get("skipped"):
         el.append(Paragraph("Layers skipped (not counted as safe): " + esc("; ".join(r["skipped"])), small))
 
@@ -196,10 +213,10 @@ def build_pdf(r: dict, screenshot: bytes | None) -> bytes:
             el.append(Paragraph("- " + esc(e), body))
 
     act = suggested_action(r)
-    el.append(Paragraph("Suggested action / الإجراء المقترح", h2))
+    el.append(Paragraph(f"Suggested action / <font name='NaskhBold'>{ar('الإجراء المقترح')}</font>", h2))
     for e, a in zip(act["en"], act["ar"]):
         el.append(Paragraph("- " + esc(e), body))
-        el.append(Paragraph(esc(ar(a)), arab))
+        el.append(ar_block(a, arab, 172 * mm))
     el.append(Paragraph(esc(act["legal_basis"]), small))
     el.append(Paragraph("Integrity", h2))
     el.append(_kv([["SHA-256 JSON evidence", wrap(json_hash)], ["SHA-256 screenshot", wrap(shot_hash)],

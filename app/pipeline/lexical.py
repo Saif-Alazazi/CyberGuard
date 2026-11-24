@@ -101,6 +101,8 @@ def brand_hits(text: str, loose: bool = False) -> list[dict]:
         for w in leet_words:
             if len(w) < 5 or abs(len(w) - len(tok)) > limit or w[0] != tok[0]:
                 continue
+            if w.startswith(tok) or tok.startswith(w) or w.endswith(tok) or tok.endswith(w):
+                continue  # "parking" is a word that extends "parkin", not a typo of it
             dist = Levenshtein.distance(w, tok)
             if 0 < dist <= limit:
                 add(bid, scope, f"typosquat ({w}~{tok})", tok)

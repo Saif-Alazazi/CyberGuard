@@ -211,7 +211,8 @@ async def inspect(final_url: str, body: bytes, content_type: str, official: str 
             reasons.append(reason("CF_SCANNER_MALICIOUS", ", ".join(cf.get("categories") or []) or "malicious"))
         young = (intel or {}).get("age_days") is not None and intel["age_days"] < 30
         if (len(text) < 80 and not p.inputs or CAPTCHA_RE.search(html)) and (brands_claimed or young):
-            reasons.append(reason("CLOAK", "CAPTCHA wall or near-empty page on a brand-keyword or days-old domain"))
+            reasons.append(reason("CLOAK", "CAPTCHA wall or near-empty page on a brand-keyword or days-old domain",
+                                  detail_ar="صفحة تحقق CAPTCHA أو صفحة شبه فارغة على نطاق يحمل اسم علامة أو حديث التسجيل"))
     return {"reasons": reasons, "skipped": skipped, "screenshot": cf.get("screenshot"), "source": source,
             "title": title, "text_excerpt": text[:600], "sensitive_fields": sorted(fields), "post_targets": post_targets,
             "telegram_exfil": bool(tg), "favicon_mmh3": fav, "favicon_brand": fav_brand, "phones": list(dict.fromkeys(phones)),

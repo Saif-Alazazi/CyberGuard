@@ -2,6 +2,7 @@
 
 The free SerpApi plan allows 250 searches a month, so one run uses a fixed pack of 12 bilingual queries.
 """
+import re
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
@@ -31,7 +32,7 @@ def _phones(text: str) -> list[str]:
 
 
 def _official_phone(e164: str) -> bool:
-    digits = e164.lstrip("+")
+    digits = re.sub(r"\D", "", e164)
     digits = digits[3:] if digits.startswith("971") else digits
     return any(digits.lstrip("0") == n.lstrip("0") for n in data().helplines)
 
@@ -44,8 +45,9 @@ def _check(title: str, snippet: str, link: str, phone: str, source: str, query: 
     if not claims:
         return None
     off_domain = reg and not d.official_brand(reg) and not d.tranco_rank(reg)
-    phones = [p for p in ([phone] if phone else []) + _phones(snippet) if p]
-    bad_phones = [p for p in phones if not _official_phone(p)]
+    phones = list(dict.fromkeys(p for p in ([phone] if phone else []) + _phones(snippet) if p))
+    # a listing that links to the brand's official site is treated as genuine (branch numbers vary)
+    bad_phones = [] if (reg and d.official_brand(reg)) else [p for p in phones if not _official_phone(p)]
     if not off_domain and not bad_phones:
         return None
     names = ", ".join(d.brands[c]["name_en"] for c in claims[:2])
@@ -53,7 +55,7 @@ def _check(title: str, snippet: str, link: str, phone: str, source: str, query: 
     if off_domain:
         detail += f" on non-official domain {reg}"
     if bad_phones:
-        detail += f"; phone {', '.join(bad_phones[:2])} is not an official helpline"
+        detail += f"; phone {', '.join(bad_phones[:2])} is not in the official helpline registry (analyst review)"
     return {"domain": reg or f"phone:{bad_phones[0]}", "source": source, "first_seen": now, "url": link,
             "detail": f"{detail} (query: {query})", "phones": bad_phones}
 

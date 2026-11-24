@@ -100,7 +100,8 @@ async def scan_url(url: str, mode: str = "fast", message: dict | None = None, so
             reasons.append(reason(s["code"], s["detail"], s.get("weight")))
     strong_lex = any(s["code"] in STRONG_LEXICAL for s in lex_hits)
     if official and strong_lex:
-        reasons.append(reason("CLOAK", "a look-alike link redirects to the real official site (typical scanner evasion)"))
+        reasons.append(reason("CLOAK", "a look-alike link redirects to the real official site (typical scanner evasion)",
+                              detail_ar="رابط مشابه يعيد التوجيه إلى الموقع الرسمي الحقيقي (أسلوب شائع للتهرب من الفحص)"))
 
     # Message-level signals
     if message:
@@ -172,7 +173,7 @@ async def scan_url(url: str, mode: str = "fast", message: dict | None = None, so
     elif deep and not config.GEMINI_API_KEY:
         skipped.append("AI brand check: no API key configured")
 
-    infra = store.infra_links(reg, first_ip, dns.get("ns", []), page)
+    infra = store.infra_links(final_host if gate["hosting"] else reg, first_ip, dns.get("ns", []), page)
     if infra and not official:
         reasons.append(reason("INFRA_LINK", infra))
         scored = finalize(reasons, bool(official) and not strong_lex, known_bad and not official)
