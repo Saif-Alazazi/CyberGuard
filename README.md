@@ -2,6 +2,8 @@
 
 **ScamShield AI Hackathon - 42 Abu Dhabi × Abu Dhabi Police, November 2026 · Team CyberGuard**
 
+**Live demo:** https://cyberguard-m7tq.onrender.com (Render free plan: the first request after 15 minutes idle takes about a minute)
+
 CyberGuard checks a link, or a whole SMS / WhatsApp / email message, and answers three questions an Abu Dhabi Police analyst needs answered fast:
 
 1. **Is it a scam?** A 0-100 risk score, a colour tier and a binary label.
@@ -129,7 +131,7 @@ python -m watchers.run_all --serp --export         # early-warning sweep
 3. Enter the secret environment variables when prompted: `GEMINI_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `URLHAUS_AUTH_KEY`, `IPINFO_TOKEN`, `SERPAPI_KEY`. `CYBERGUARD_API_KEY` is optional: if set, it gates batch and watcher runs.
 4. Deploy, then open `https://<service>.onrender.com/health`.
 
-The free instance sleeps after 15 minutes idle, so the first request after sleeping takes ~1 minute. The SQLite database is in `/tmp` and resets on restart; the last watcher findings are re-seeded from `data/seed_scans.jsonl` and `data/early_warnings_seed.json`. No headless browser runs on the server: screenshots come from the Cloudflare URL Scanner API.
+The free instance sleeps after 15 minutes idle, so the first request after sleeping takes ~1 minute; an external ping of `/health` every 10 minutes (e.g. cron-job.org) keeps it awake. The SQLite database is in `/tmp` and resets on restart; the last watcher findings are re-seeded from `data/seed_scans.jsonl` and `data/early_warnings_seed.json`. No headless browser runs on the server: screenshots come from the Cloudflare URL Scanner API.
 
 ### API
 

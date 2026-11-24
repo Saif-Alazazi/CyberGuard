@@ -4,7 +4,7 @@ Recorded by a team member, in their own voice, while clicking through the **live
 
 ## Before you press record
 
-1. Open the live Render URL and wait for the page to load. The free plan sleeps after 15 minutes idle, and the first request can take about a minute.
+1. Open the live app at https://cyberguard-m7tq.onrender.com and wait for the page to load. The free plan sleeps after 15 minutes idle, and the first request can take about a minute.
 2. Click **Fake RTA fine** once, so the service is warm and every later scan answers in a few seconds. Then reload the page.
 3. Make sure the interface is in **English** (top-right button reads `عربي`) and **Fast** mode is selected.
 4. Browser at 100% zoom, full screen, no other tabs visible. Screen recorder: 1080p, microphone on.
