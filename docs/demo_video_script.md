@@ -35,7 +35,7 @@ Play the screen video on the laptop. Start the phone's **voice recorder**, say *
 | When you see... | Say (slowly and clearly) |
 |---|---|
 | The home page | "Scam links that pretend to be RTA, UAE PASS and banks reach UAE phones every day. This is CyberGuard." |
-| The red 100 | "I paste a real scam message in Arabic. CyberGuard finds the link and shows it is a fake RTA site, sent from a foreign number." |
+| The red 100 | "I paste a real scam message in Arabic. The sender can pretend to be RTA, but CyberGuard checks the link and shows it is a fake RTA site. The real one is rta.ae." |
 | The reasons and Arabic | "It explains why in English and in Arabic." |
 | Deep mode and the screenshot | "Deep mode opens the page safely and takes a screenshot as proof." |
 | The PDF | "One click gives the police an evidence report." |
