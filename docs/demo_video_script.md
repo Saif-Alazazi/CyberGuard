@@ -1,46 +1,73 @@
-# CyberGuard - 60-second demo video (record in your own voice)
+# CyberGuard - 60-second demo video (simple version)
 
-Live app: **https://cyberguard-m7tq.onrender.com**. AI-generated video or voice is not allowed: record your own screen and your own voice.
+You make **two recordings**: (1) the screen, with no talking; (2) your voice on your phone. Then they are combined into one video. It is your real voice, not AI.
 
-## 1. Before you record (5 minutes)
+Live app: **https://cyberguard-m7tq.onrender.com**
 
-1. On a laptop, open Chrome and go to https://cyberguard-m7tq.onrender.com. The first load can take up to a minute if the site was asleep.
-2. Warm it up: click the **Fake RTA fine (Arabic SMS)** demo button and wait for the result. Then select **Deep (screenshot + AI)**, click **Fake UAE PASS**, and wait until a screenshot appears (about 15 s). Then press F5 to reload the page.
-3. Check: the top-right button says **عربي** (the page is in English), and **Fast** is selected.
-4. Close other tabs, zoom at 100% (Ctrl+0), full screen (F11).
-5. Recorder: Windows **Win+Alt+R** (Xbox Game Bar), or OBS / Loom. Microphone on, 1080p.
-6. Practise once without recording. Speak slowly: about 130 words in 60 seconds.
+---
 
-## 2. The script (what to click and what to say)
+## Step 1 - Get ready (3 minutes)
 
-| Time | Click / show | Say |
-|---|---|---|
-| 0:00-0:05 | Home page, don't move the mouse. | "Fake RTA, UAE PASS and bank links hit UAE phones every day. This is CyberGuard." |
-| 0:05-0:15 | Click **Fake RTA fine (Arabic SMS)**. Point at the red **100** gauge and the **Impersonates: RTA** line. | "I paste a real-looking Arabic SMS. It finds the link, sees a fake gov.ae address imitating RTA, sent from a Philippine number." |
-| 0:15-0:20 | Scroll down through **Why**. Click **عربي**, then click **English** again. | "Every reason is in English and Arabic, and the whole site works in Arabic." |
-| 0:20-0:33 | Scroll to the top. Click **Deep (screenshot + AI)**. Click **Fake UAE PASS**. Keep talking while it works (~15 s). Point at the **screenshot** when it appears. | "Deep mode opens the page safely in the cloud, takes a mobile screenshot, and checks for login, OTP or card forms and for cloaking." |
-| 0:33-0:39 | Click **PDF report** (opens in a new tab). Scroll the PDF once. | "One click gives police evidence: screenshot, WHOIS, hosting, hashes, timestamps and Aman reporting steps." |
-| 0:39-0:45 | Close the PDF tab. Click **Fast**. Click **bit.ly → real bank**. Point at the green **Official domain**. | "A short link that lands on First Abu Dhabi Bank is followed and marked official, not flagged." |
-| 0:45-0:52 | Click the **Early warnings** tab. Point at **parkin.vip** and the red "not on blocklists yet". | "It also catches look-alikes the day they are registered, before any blocklist." |
-| 0:52-1:00 | Click the **Scam network** tab. Point at a cluster of linked dots. | "And it links scam domains into campaigns. CyberGuard: detect, explain, prove." |
+1. On the laptop, open Chrome and go to the live app. Wait until it loads (first time can take 1 minute).
+2. Warm it up: click **Fake RTA fine**, wait for the result. Click **Deep**, click **Fake UAE PASS**, wait for the screenshot. Press **F5** to reload.
+3. Make sure the page is in **English** and **Fast** is selected.
+4. Press **F11** (full screen). Close other tabs.
 
-## 3. If something goes wrong (fast fixes)
+## Step 2 - Record the screen, no talking (about 60 seconds)
+
+Start recording: press **Win + Alt + R** (press again to stop). Move the mouse slowly. Wait about 2 seconds after each result appears.
+
+1. **(0-5 s)** Show the home page. Do nothing.
+2. **(5-15 s)** Click **Fake RTA fine (Arabic SMS)**. Move the mouse over the red **100** and the line **Impersonates: RTA**.
+3. **(15-20 s)** Scroll down slowly over the reasons. Click **عربي**, wait 2 seconds, click **English**.
+4. **(20-35 s)** Scroll to the top. Click **Deep**. Click **Fake UAE PASS**. Wait until the **screenshot** shows. Point at it.
+5. **(35-41 s)** Click **PDF report**. Scroll the PDF once. Close that tab.
+6. **(41-47 s)** Click **Fast**. Click **bit.ly → real bank**. Point at the green **Official domain**.
+7. **(47-53 s)** Click the **Early warnings** tab. Point at **parkin.vip** and "not on blocklists yet".
+8. **(53-60 s)** Click the **Scam network** tab. Point at a group of connected dots.
+
+Stop recording (**Win + Alt + R**). The video is saved in `Videos\Captures`.
+
+## Step 3 - Record your voice on your phone (play the video and talk over it)
+
+Play the screen video on the laptop. Start the phone's **voice recorder**, say **"three, two, one"**, then press play on the laptop and read each line when you see that part:
+
+| When you see... | Say (slowly and clearly) |
+|---|---|
+| The home page | "Scam links that pretend to be RTA, UAE PASS and banks reach UAE phones every day. This is CyberGuard." |
+| The red 100 | "I paste a real scam message in Arabic. CyberGuard finds the link and shows it is a fake RTA site, sent from a foreign number." |
+| The reasons and Arabic | "It explains why in English and in Arabic." |
+| Deep mode and the screenshot | "Deep mode opens the page safely and takes a screenshot as proof." |
+| The PDF | "One click gives the police an evidence report." |
+| The green Official | "A short link to a real bank is followed to the end and marked official, not a scam." |
+| Early warnings | "It also finds new fake websites the day they are created, before anyone is scammed." |
+| Scam network | "And it connects scam websites into one network. CyberGuard: detect, explain, prove." |
+
+About 110 words. If you make a mistake, just record again.
+
+## Step 4 - Send the two files
+
+Put both files in the folder **`C:\Users\Sa940\Documents\CyberGuard\video\`** on the laptop:
+- the screen video (from `Videos\Captures`)
+- the phone voice recording (send it to the laptop by WhatsApp Web, email to yourself, or Google Drive)
+
+Then say **"files are in the video folder"**. The combined video (your voice + screen, with English subtitles) will be saved as `video\CyberGuard_demo.mp4`, ready to upload.
+
+## Step 5 - Upload
+
+- **YouTube:** Create → Upload → choose `CyberGuard_demo.mp4` → visibility **Unlisted** → copy the link.
+- **Or Google Drive:** upload → Share → **Anyone with the link** → copy the link.
+- Test the link in an incognito window.
+
+## If something goes wrong
 
 | Problem | Fix |
 |---|---|
-| Site shows a loading page or takes long | It was asleep. Wait 60 s, reload, warm up again (step 1.2). |
-| Deep scan takes longer than 20 s | Keep talking: "it is opening the page in a safe cloud browser". Don't cut. |
-| No screenshot appears | Say "the screenshot goes into the evidence pack when the page answers", then click **PDF report** as planned. |
-| A demo button gives a different score | Fine. The verdict colour and reasons are what matter. Read the top reason aloud instead. |
-| The whole site is down | Record the same flow using the PDF evidence and slides, and say the live site is at the URL. (Unlikely: it passed 46/46 live checks at 03:45.) |
-| You go over 60 s | Skip the Arabic switch (0:15-0:20); it is also in the live pitch. |
+| Page is slow the first time | It was asleep. Wait 1 minute and reload. |
+| No screenshot in Deep mode | Skip pointing at it; go straight to **PDF report**. |
+| Video longer than 60 s | Fine: it will be trimmed when combined. |
+| Short on time | Upload the screen video alone (no voice). It still shows everything. |
 
-## 4. Upload the video
+## For the 5-minute live pitch
 
-- **YouTube:** Create → Upload video → choose the file → visibility **Unlisted** → copy the link.
-- **Or Google Drive:** upload → right-click → Share → General access: **Anyone with the link** (Viewer) → Copy link.
-- Open the link in a private/incognito window to make sure it plays without logging in.
-
-## 5. For the 5-minute live pitch (not in the 60-second video)
-
-Also open the **Safe Links** tab: click **Protect this message**, tap the protected RTA link (bilingual warning with "Report to Aman"), then tap the protected FAB link (the real bank opens instantly). Line to say: "A telecom or bank SMS gateway can rewrite every link like this, so every tap is checked automatically."
+Also show the **Safe Links** tab: click **Protect this message**, tap the protected RTA link (red warning page), then tap the FAB link (the real bank opens).
