@@ -1,0 +1,127 @@
+:root {
+  --navy: #0b3d5c;
+  --gold: #b8862b;
+  --red: #c0262d;
+  --orange: #d9711f;
+  --yellow: #c9a227;
+  --green: #1f8a4c;
+  --grey: #5a6b76;
+  --ink: #15202b;
+  --line: #e3e9ed;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  width: 340px;
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background: #fff;
+}
+
+header {
+  background: var(--navy);
+  color: #fff;
+  padding: 12px 14px 10px;
+}
+.logo { display: flex; align-items: center; gap: 8px; }
+.shield { font-size: 18px; }
+.brand { font-size: 17px; font-weight: 700; letter-spacing: .2px; }
+.gold { color: var(--gold); }
+.tag { font-size: 11px; opacity: .8; margin-top: 2px; }
+
+main { padding: 14px; }
+
+.url {
+  font-size: 12px;
+  color: var(--grey);
+  word-break: break-all;
+  background: #f5f8fa;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 9px;
+  margin-bottom: 12px;
+}
+
+.verdict {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.badge {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  padding: 11px 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+.score-wrap { text-align: center; min-width: 64px; }
+.score { font-size: 28px; font-weight: 800; line-height: 1; }
+.score-label { font-size: 10px; color: var(--grey); text-transform: uppercase; letter-spacing: .5px; }
+
+.brand-line {
+  font-size: 12.5px;
+  background: #fff6ec;
+  border: 1px solid #f0d9b8;
+  border-radius: 6px;
+  padding: 7px 9px;
+  margin-bottom: 10px;
+}
+.brand-line b { color: var(--gold); }
+
+.reasons { list-style: none; margin: 0 0 6px; padding: 0; }
+.reasons li {
+  font-size: 12.5px;
+  line-height: 1.4;
+  padding: 6px 0 6px 16px;
+  position: relative;
+  border-top: 1px solid var(--line);
+}
+.reasons li:before {
+  content: "\2022";
+  position: absolute;
+  left: 2px;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.status { font-size: 13px; color: var(--grey); padding: 6px 0; }
+.status.error { color: var(--red); }
+
+.caseid { font-size: 10.5px; color: var(--grey); margin-top: 8px; letter-spacing: .3px; }
+
+footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  padding: 10px 14px;
+}
+.recheck {
+  background: var(--navy);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.recheck:hover { background: #0e4d73; }
+.full { font-size: 12px; color: var(--navy); text-decoration: none; font-weight: 600; }
+.full:hover { text-decoration: underline; }
+
+.hidden { display: none !important; }
+
+/* tier colours applied to the badge */
+.t-high_risk { background: var(--red); }
+.t-likely_scam { background: var(--orange); }
+.t-suspicious { background: var(--yellow); color: var(--ink); }
+.t-not_verified { background: var(--grey); }
+.t-official { background: var(--green); }
+.t-review { background: var(--grey); }
