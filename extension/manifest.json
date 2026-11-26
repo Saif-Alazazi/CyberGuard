@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "CyberGuard — Scam Link Check",
-  "version": "1.0",
-  "description": "Checks the page you are on against the live CyberGuard engine and shows a red/green scam verdict with reasons.",
+  "name": "CyberGuard UAE — Scam Message & Link Checker",
+  "version": "1.0.0",
+  "description": "Paste a suspicious SMS or WhatsApp message, or check the page you're on — instant scam verdict with reasons in English & Arabic.",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "CyberGuard — check this page"
+    "default_title": "CyberGuard — check a message or this page"
   },
   "permissions": ["activeTab"],
   "host_permissions": ["https://cyberguard-m7tq.onrender.com/*"],
