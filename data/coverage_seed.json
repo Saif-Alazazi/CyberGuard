@@ -12,15 +12,15 @@
   }
  },
  "nrd": {
-  "run_utc": "2026-11-24T22:29:05+00:00",
+  "run_utc": "2026-11-26T05:58:13+00:00",
   "stats": {
-   "registration_day": "2026-11-20 to 2026-11-23",
+   "registration_day": "2026-11-22 to 2026-11-25",
    "domains_screened": 280000,
-   "lookalikes": 7
+   "lookalikes": 12
   }
  },
  "ct": {
-  "run_utc": "2026-11-24T22:35:36+00:00",
+  "run_utc": "2026-11-26T06:01:43+00:00",
   "stats": {
    "brand_queries": 17,
    "unavailable": false,

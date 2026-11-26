@@ -1,5 +1,65 @@
 [
  {
+  "domain": "b-dhl.top",
+  "source": "nrd",
+  "first_seen": "2026-11-25T00:00:00+00:00",
+  "detail": "registered 2026-11-25; looks like dhl",
+  "score": 90,
+  "tier": "high_risk",
+  "blocklisted": false,
+  "scan_id": "CG-20261126-53509C"
+ },
+ {
+  "domain": "dewa16.net",
+  "source": "nrd",
+  "first_seen": "2026-11-25T00:00:00+00:00",
+  "detail": "registered 2026-11-25; looks like dewa",
+  "score": 70,
+  "tier": "likely_scam",
+  "blocklisted": false,
+  "scan_id": "CG-20261126-7D52CB"
+ },
+ {
+  "domain": "qmobility.tech",
+  "source": "nrd",
+  "first_seen": "2026-11-25T00:00:00+00:00",
+  "detail": "registered 2026-11-25; looks like qmobility",
+  "score": 60,
+  "tier": "likely_scam",
+  "blocklisted": false,
+  "scan_id": "CG-20261126-307238"
+ },
+ {
+  "domain": "dewa33.blog",
+  "source": "nrd",
+  "first_seen": "2026-11-24T00:00:00+00:00",
+  "detail": "registered 2026-11-24; looks like dewa",
+  "score": 80,
+  "tier": "high_risk",
+  "blocklisted": false,
+  "scan_id": "CG-20261126-60FFFB"
+ },
+ {
+  "domain": "dewa90.casino",
+  "source": "nrd",
+  "first_seen": "2026-11-24T00:00:00+00:00",
+  "detail": "registered 2026-11-24; looks like dewa",
+  "score": 70,
+  "tier": "likely_scam",
+  "blocklisted": false,
+  "scan_id": "CG-20261126-61E52D"
+ },
+ {
+  "domain": "service-dhltrack.com",
+  "source": "nrd",
+  "first_seen": "2026-11-24T00:00:00+00:00",
+  "detail": "registered 2026-11-24; looks like dhl",
+  "score": 35,
+  "tier": "suspicious",
+  "blocklisted": false,
+  "scan_id": "CG-20261126-B1CA03"
+ },
+ {
   "domain": "parkin.vip",
   "source": "nrd",
   "first_seen": "2026-11-23T00:00:00+00:00",
@@ -7,7 +67,7 @@
   "score": 80,
   "tier": "high_risk",
   "blocklisted": false,
-  "scan_id": "CG-20261124-5A8B2D"
+  "scan_id": "CG-20261126-872D2D"
  },
  {
   "domain": "3dewa.sbs",
@@ -17,7 +77,7 @@
   "score": 65,
   "tier": "likely_scam",
   "blocklisted": false,
-  "scan_id": "CG-20261124-6D56B8"
+  "scan_id": "CG-20261126-9CBB22"
  },
  {
   "domain": "3dewa.online",
@@ -27,7 +87,7 @@
   "score": 65,
   "tier": "likely_scam",
   "blocklisted": false,
-  "scan_id": "CG-20261124-7DB6EE"
+  "scan_id": "CG-20261126-27E9CF"
  },
  {
   "domain": "salilk.net",
@@ -37,36 +97,6 @@
   "score": 60,
   "tier": "likely_scam",
   "blocklisted": false,
-  "scan_id": "CG-20261124-0E9857"
- },
- {
-  "domain": "dewa7.live",
-  "source": "nrd",
-  "first_seen": "2026-11-21T00:00:00+00:00",
-  "detail": "registered 2026-11-21; looks like dewa",
-  "score": 80,
-  "tier": "high_risk",
-  "blocklisted": false,
-  "scan_id": "CG-20261124-3CF7A6"
- },
- {
-  "domain": "payit.here",
-  "source": "nrd",
-  "first_seen": "2026-11-21T00:00:00+00:00",
-  "detail": "registered 2026-11-21; looks like fab",
-  "score": 20,
-  "tier": "not_verified",
-  "blocklisted": false,
-  "scan_id": "CG-20261124-AB8C41"
- },
- {
-  "domain": "dewa77.me",
-  "source": "nrd",
-  "first_seen": "2026-11-20T00:00:00+00:00",
-  "detail": "registered 2026-11-20; looks like dewa",
-  "score": 45,
-  "tier": "suspicious",
-  "blocklisted": false,
-  "scan_id": "CG-20261124-A0BA8F"
+  "scan_id": "CG-20261126-9E2667"
  }
 ]
